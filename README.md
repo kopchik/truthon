@@ -96,5 +96,21 @@ Phases:
 
 
 
+Terminology:
+  1. Parser (definitions are from https://siod.svn.codeplex.com/svn/winsiod/pratt.scm, A simple Pratt-Parser for SIOD: 2-FEB-90, George Carrette, GJC@PARADIGM.COM):
+    1. NUD -- NUll left Denotation (op has nothing to its left (prefix))
+    1. LED -- LEft Denotation      (op has something to left (postfix or infix))
+    1. LBP -- Left Binding Power  (the stickiness to the left)
+    1. RBP -- Right Binding Power (the stickiness to the right)
+
 Project name:
-  1. brainduck (busy)
+  1. Brainduck (busy)
+  1. Concrete mixer
+
+
+Literature:
+  Top-level grammar:
+    1. http://en.wikipedia.org/wiki/Parsing_expression_grammar
+  Expressions:
+    1. http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
+    1. http://effbot.org/zone/simple-top-down-parsing.htm
