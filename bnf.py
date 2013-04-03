@@ -10,7 +10,7 @@
 from collections import OrderedDict
 import re
 
-from log import Log
+from useful.log import Log
 
 
 WSPACE = r'\s*'
@@ -83,7 +83,7 @@ def to_plural(inst):
 
 class Re(Grammar):
   regexp = '<PLACE FOR PATTERN>'
-  log = Log("re", verb='info')
+  log = Log("re")
 
   def parse(self, text, pos=0):
     m = re.match(WSPACE+self.regexp+WSPACE, text[pos:])
@@ -237,29 +237,31 @@ def MAYBE(*_things):
   return MAYBE
 
 
-###########################################
 #### SOME OF ####
 class SomeOf(Grammar):
   """ Match from min to max elements.
       After max elements it stops
   """
-  min = 1
-  max = None # infinity
   things = []
   def parse(self, text, pos=0):
-    matched = 0
     result = OrderedDict()
-    # XXX TODO: here should be loop
-    for Thing in self.things:
-      try:
-        thing = Thing()
-        r, pos = thing.parse(text, pos)
-        result.update(r)
-        matched += 1
-        if self.max and matched == self.max:
+    while True:
+      for Thing in self.things:
+        try:
+          thing = Thing()
+          r, pos = thing.parse(text, pos)
+          result.update(r)
           break
-      except NoMatch:
-        pass
-    if matched < self.min:
+        except NoMatch:
+          pass
+      else:
+        break
+    if not result:
       raise NoMatch("syntax error", text, pos)
     return result, pos
+
+
+def SOMEOF(*items):
+  class SOMEOF(SomeOf):
+    things = items
+  return SOMEOF
