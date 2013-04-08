@@ -244,21 +244,21 @@ class SomeOf(Grammar):
   """
   things = []
   def parse(self, text, pos=0):
-    result = OrderedDict()
+    result = []
     while True:
       for Thing in self.things:
         try:
           thing = Thing()
           r, pos = thing.parse(text, pos)
-          result.update(r)
-          break
+          result += [r]
+          break  # break is neccessary because it's a PEG parser and order does matter
         except NoMatch:
           pass
       else:
         break
     if not result:
       raise NoMatch("syntax error", text, pos)
-    return result, pos
+    return self.process(result), pos
 
 
 def SOMEOF(*items):

@@ -7,11 +7,10 @@ My experiments with compilers, do not use!
 FILES
 -----
 
-bnf.py      -- engine to define grammar in a bnf-like way
-grammar.py  -- formal grammar definition
-ast.py      -- abstract syntax tree nodes
-expr.py     -- expression parses
-type.py     -- type checker
+1. grammar.py  -- formal grammar definition
+1. peg.py      -- Peg parser that allows to define grammar in a bnf-like way
+1. pratt.py    -- Pratt parser, used to parse expressions
+
 
 Stages
 ------

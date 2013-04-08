@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from bnf import *
+from peg import *
 
 
 #################
@@ -23,7 +23,6 @@ COMMENT = SHComment | CComment | CPPComment
 # but allows trailing comments
 END = MAYBE(COMMENT) + ENDL
 PASS = K("pass") + END
-VARS = K("VARS") + S(':') + END
 
 
 #########
@@ -81,22 +80,25 @@ OP = PLUS | MINUS | MULT | DIV | POW | EQ | GE | GT | LE | LT | CAST
 # Since expression needs recursive definition
 # we define "reference" first and then populate it
 VALUE = NAME | CONST
-class EXPR(All): pass
-PARENEXPR = S("(") + EXPR + S(")")
+LPAREN = S("(")
+RPAREN = S(")")
+PARENS = LPAREN | RPAREN
+EXPR = SOMEOF(VALUE, OP, PARENS)
+# PARENEXPR = S("(") + EXPR + S(")")
 # EXPR.things = [(VALUE | PARENEXPR) + OP + (VALUE | PARENEXPR) | \
 #                (VALUE | PARENEXPR) | \
 #                VALUE | \
 #                EXPR
 #               ]
 
-EXPR.things = [(VALUE|PARENEXPR)  + OP + (VALUE|PARENEXPR)]
+# EXPR.things = [(VALUE|PARENEXPR)  + OP + (VALUE|PARENEXPR)]
+
 
 
 ################
 # HIGHER-ORDER #
 ################
 
-ASSIGMENT = NAME + S('=') + VALUE
 DEFAULT = (S('=')+VALUE) # TODO | NOVAL
 ARG = NAME + S(':') + TYPE + DEFAULT
 ARGS = LIST(ARG, _name="args")
@@ -104,7 +106,7 @@ RTYPE = (S('->')+TYPE) # TODO | VOID
 FUNC = K('def') + NAME + S('(') + ARGS + S(')') \
         + RTYPE + S(':') + END
 IF = K('if') + EXPR + S(':') + END
-RETURN_CONST = K("return") + VALUE
+RETURN_CONST = K("return") + EXPR
 EXTERN  = K('extern') + ID("lib") + S('.') + ID("name") \
           + S('(') + ARGS + S(')') + RTYPE + END
 PROGRAM = FUNC | ASSIGMENT | IF | PASS | RETURN_CONST | EXTERN | END
