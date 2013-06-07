@@ -47,6 +47,8 @@ Goals
     C /* Hi! */
 1. All programs can be opened as libraries
 1. No header files needed, everything is in elf (possibly in compressed format).
+1. Keep it simple (to learn, to read, to extend)
+1. Error-resistant coding
 
 
 
@@ -75,7 +77,7 @@ Translator design:
   3. AST composer
 
 TODO:
-  wildcard syntax? def X(*things)
+  wildcard syntax? def X(**things)
 
 
 Phases:
@@ -113,3 +115,9 @@ Literature:
   Expressions:
     1. http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
     1. http://effbot.org/zone/simple-top-down-parsing.htm
+
+
+CODING GUIDELINES
+=================
+
+property? -- boolean property
