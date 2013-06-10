@@ -121,3 +121,9 @@ CODING GUIDELINES
 =================
 
 property? -- boolean property
+
+DESIGN GUIDELINES
+=================
+
+Functions either return value or raise exception.
+
