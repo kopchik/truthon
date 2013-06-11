@@ -131,3 +131,13 @@ files = `ls -la /tmp`
 # and this is a comment
 /* and this as well */
 ; have fun with many comment styles
+
+
+/* SMALL THINGS */
+for elem in some_list:
+  ...
+print elem  //will raise error because loop variables are not seen outside the loop by default
+
+// for this reason file will be automaticaly closed once the control reach the end of the loop
+for l in os.open("some_file"):
+  ...
