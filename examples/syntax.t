@@ -1,10 +1,3 @@
-/* COMMENTS */
-
-# this is a comment
-/* and this is a comment */
-// and even this
-// have fun with many comment styles
-
 /* DATA TYPES */
 //ints and floats, types are infered from the value
 i = 1; f = 1.0
@@ -22,10 +15,11 @@ print x.a, x.b, x.c
 //hashes
 {a=>b}
 {}
+//regular expressions
+pattern = /[A-z][a-z]{1-2}/
 
 
 /* BASICS */
-
 // define variable
 x = 1
 
@@ -40,13 +34,13 @@ z x=1, y=2
 // composition, equivalent of print(z(1,2))
 print z 1, 2
 
-# conditions:
-if a > 2: pass
-
-if x == 2:
-  x = 3
-else:
-  x = 4
+// conditions:
+if a > 2:
+  pass
+//if-else in one line
+if x == 2: {x = 3} else: {x = 4}
+//regexp
+if x ~= //
 
 
 switch x:
@@ -126,6 +120,14 @@ fd = try {open "filename"} except NotFound: -1
 
 
 /* LANGUAGE MODES */
-x = `ls -la`
+//shell invocation in backticks
+files = `ls -la /tmp`
+`for f in ${files}; do scp $f remote:/tmp; done` \
+  || die "scp failed with ${_err}"
 
 
+/* COMMENTS */
+// this is a comment
+# and this is a comment
+/* and this as well */
+; have fun with many comment styles
