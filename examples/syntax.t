@@ -13,8 +13,10 @@ x = X(a=1, b=2, c=3)
 // access tuple attrs
 print x.a, x.b, x.c
 //hashes
-{a=>b}
-{}
+{}  // empty hash
+h = {b=>2,a=>1}
+print h.keys // -> "[b, a]" because hashes preserve insert order
+
 //regular expressions
 pattern = /[A-z][a-z]{1-2}/
 

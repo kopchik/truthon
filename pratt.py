@@ -5,10 +5,13 @@ sys.setrecursionlimit(30)
 
 class Op:
   lbp = None  # left binding power (left-to-right precedence)
+  rbp = None  # right binding power
   def nud(self):
+    """ null denotation (starting token)"""
     raise Exception("this token cannot start expr")
 
   def led(self, left):
+    """ left denotation """
     raise Exception("this token cannot be in the middle of expr")
 
 
@@ -27,15 +30,17 @@ class VALUE(Op):
 
 class PLUS(Op):
   lbp = 10
+  rbp = 100
   def nud(self):
-    return expr(100)
+    return expr(self.rbp)
   def led(self, left):
     return left + expr(self.lbp)
 
 class MINUS(Op):
   lbp = 10
+  rbp = 100
   def nud(self):
-    return -expr(100)
+    return -expr(self.rbp)
   def led(self, left):
     return left - expr(self.lbp)
 
