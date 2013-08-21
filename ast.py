@@ -2,23 +2,18 @@
 
 from collections import defaultdict
 
-def factory():
+def OpFac():
   class Op:
-    lbp = None
-    rbp = None
-    sym = None
+    lbp = rbp = sym = None
     def nud(self, expr):
-      """ null denotation (starting token) """
       raise Exception("this token cannot start expr")
-
     def led(self, left, expr):
-      """ left denotation """
       raise Exception("this token cannot be in the middle of expr")
     def __repr__(self):
       cls = self.__class__.__name__
       return "%s(%s<'%s'>%s)" % (cls, self.lbp, self.sym, self.rbp)
   return Op
-symap = defaultdict(factory)
+symap = defaultdict(OpFac)
 
 
 class prefix:
