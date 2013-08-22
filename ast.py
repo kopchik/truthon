@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
+from useful.mstring import s
+import sys
 
-from collections import defaultdict
+symap = {}
 
-def OpFac():
-  class Op:
-    lbp = rbp = sym = None
-    def nud(self, expr):
-      raise Exception("this token cannot start expr")
-    def led(self, left, expr):
-      raise Exception("this token cannot be in the middle of expr")
-    def __repr__(self):
-      cls = self.__class__.__name__
-      return "%s(%s<'%s'>%s)" % (cls, self.lbp, self.sym, self.rbp)
-  return Op
-symap = defaultdict(OpFac)
+def symbol(sym, lbp=0):
+  try:
+    Sym = symap[sym]
+  except KeyError:
+    class Sym: pass
+    Sym.__name__ = 'Sym(%s)' % sym
+    Sym.__repr__ = lambda _: 'Sym(%s)' % sym
+    Sym.sym = sym
+    Sym.lbp = lbp
+    symap[sym] = Sym
+  else:
+    Sym.lbp = max(lbp, Sym.lbp)
+  return Sym
 
 
 class prefix:
@@ -22,15 +25,10 @@ class prefix:
     self.rbp = rbp
 
   def __call__(self, cls):
-    op = symap[self.sym]
     def nud(self, expr):
-      print(self)
       return cls(expr(self.rbp))
-    op.nud = nud
-    op.rbp = self.rbp
-    op.sym = self.sym
+    symbol(self.sym).nud = nud
     return cls
-
 
 class infix:
   def __init__(self, sym, lbp):
@@ -38,14 +36,10 @@ class infix:
     self.lbp = lbp
 
   def __call__(self, cls):
-    op = symap[self.sym]
     def led(self, left, expr):
       return cls(left, expr(self.lbp))
-    op.led = led
-    op.sym = self.sym
-    op.lbp = self.lbp
+    symbol(self.sym, self.lbp).led = led
     return cls
-
 
 class Value:
   lbp = 0
@@ -55,8 +49,8 @@ class Value:
     return self
   def __repr__(self):
     cls = self.__class__.__name__
-    return "(%s %s)" % (cls, self.value)
-
+    # return "(%s %s)" % (cls, self.value)
+    return "%s" % (self.value)
 
 class END:
   lbp = 0
@@ -64,6 +58,7 @@ class END:
     return "END"
 
 #--
+
 class Binary:
   def __init__(self, left, right):
     self.left = left
@@ -80,6 +75,7 @@ class Unary:
     cls = self.__class__.__name__
     return "(%s %s)" % (cls, self.value)
 
+# UNARY #
 @prefix('-', 100)
 class Minus(Unary):
   pass
@@ -88,9 +84,11 @@ class Minus(Unary):
 class Plus(Unary):
   pass
 
+# BINARY #
 @infix('+', 10)
 class Add(Binary):
   pass
+
 
 @infix('-', 10)
 class Sub(Binary):
@@ -111,12 +109,11 @@ class Expr:
 
   def expr(self, rbp=0):
     expr = self.expr
-    cur, nxt = self.shift()
-    left = cur.nud(expr)
-    while rbp < nxt.lbp:
-      cur, nxt = self.shift()
-      print(cur, nxt)
-      left = cur.led(left, expr)
+    self.shift()
+    left = self.cur.nud(expr)
+    while rbp < self.nxt.lbp:
+      self.shift()
+      left = self.cur.led(left, expr)
     return left
 
 def tokenizer(s):
@@ -129,8 +126,8 @@ def tokenizer(s):
   yield END()
 
 def main():
-  tokens = tokenizer("1 + 2 + 3")
-  # print(list(tokens))
+  tokens = tokenizer("1 + 2 - 3")
+  tokens = list(tokens)
   # tokens =  symap['-'](), Value(1), symap['+'](), Value(2), END()
   # tokens = symap['-'](), Value(1), END()
   expr = Expr(tokens)
