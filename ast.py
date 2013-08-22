@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-from useful.mstring import s
+
+"""
+Pratt-like parser.
+Inspired by http://effbot.org/zone/simple-top-down-parsing.htm
+"""
+
 from io import StringIO
 import sys
 
@@ -27,7 +32,6 @@ def method(s):
         setattr(s, fn.__name__, fn)
     return bind
 
-
 class prefix:
   def __init__(self, sym, rbp):
     self.sym = sym
@@ -40,6 +44,7 @@ class prefix:
     symbol(self.sym).nud = nud
     return cls
 
+
 class infix:
   def __init__(self, sym, lbp):
     self.sym = sym
@@ -48,17 +53,6 @@ class infix:
   def __call__(self, cls):
     def led(self, left):
       return cls(left, expr(self.lbp))
-    symbol(self.sym, self.lbp).led = led
-    return cls
-
-class postfix:
-  def __init__(self, sym, lbp):
-    self.sym = sym
-    self.lbp = lbp
-
-  def __call__(self, cls):
-    def led(self, left):
-      return cls(left)
     symbol(self.sym, self.lbp).led = led
     return cls
 
@@ -73,6 +67,19 @@ class infix_r:
       return cls(left, expr(self.lbp-1))
     symbol(self.sym, self.lbp).led = led
     return cls
+
+
+class postfix:
+  def __init__(self, sym, lbp):
+    self.sym = sym
+    self.lbp = lbp
+
+  def __call__(self, cls):
+    def led(self, left):
+      return cls(left)
+    symbol(self.sym, self.lbp).led = led
+    return cls
+
 
 class Value:
   lbp = 0
