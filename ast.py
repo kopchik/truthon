@@ -19,14 +19,23 @@ def symbol(sym, lbp=0):
   return Sym
 
 
+def method(s):
+    # decorator
+    assert issubclass(s, symbol_base)
+    def bind(fn):
+        setattr(s, fn.__name__, fn)
+    return bind
+
+
 class prefix:
   def __init__(self, sym, rbp):
     self.sym = sym
     self.rbp = rbp
 
   def __call__(self, cls):
+    rbp = self.rbp
     def nud(self, expr):
-      return cls(expr(self.rbp))
+      return cls(expr(rbp))
     symbol(self.sym).nud = nud
     return cls
 
@@ -38,6 +47,18 @@ class infix:
   def __call__(self, cls):
     def led(self, left, expr):
       return cls(left, expr(self.lbp))
+    symbol(self.sym, self.lbp).led = led
+    return cls
+
+
+class infix_r:
+  def __init__(self, sym, lbp):
+    self.sym = sym
+    self.lbp = lbp
+
+  def __call__(self, cls):
+    def led(self, left, expr):
+      return cls(left, expr(self.lbp-1))
     symbol(self.sym, self.lbp).led = led
     return cls
 
@@ -57,7 +78,10 @@ class END:
   def __repr__(self):
     return "END"
 
-#--
+
+#####################
+# SOME OP TEMPLATES #
+#####################
 
 class Binary:
   def __init__(self, left, right):
@@ -75,7 +99,10 @@ class Unary:
     cls = self.__class__.__name__
     return "(%s %s)" % (cls, self.value)
 
+#########
 # UNARY #
+#########
+
 @prefix('-', 100)
 class Minus(Unary):
   pass
@@ -84,7 +111,18 @@ class Minus(Unary):
 class Plus(Unary):
   pass
 
+@prefix('p', 0)
+class Print(Unary):
+  pass
+
+@prefix('->', 2)
+class Lambda0(Unary):
+  pass
+
+##########
 # BINARY #
+##########
+
 @infix('+', 10)
 class Add(Binary):
   pass
@@ -92,6 +130,19 @@ class Add(Binary):
 
 @infix('-', 10)
 class Sub(Binary):
+  pass
+
+
+@infix_r('^', 30)
+class Pow(Binary):
+  pass
+
+@infix('=', 1)
+class Eq(Binary):
+  pass
+
+@infix('->', 2)
+class Lambda(Binary):
   pass
 
 class Expr:
@@ -126,7 +177,8 @@ def tokenizer(s):
   yield END()
 
 def main():
-  tokens = tokenizer("1 + 2 - 3")
+  #tokens = tokenizer("p x = 1 ^ 2 ^ 3 + 1")
+  tokens  = tokenizer("myfunc = 1 + -> 1 + b")
   tokens = list(tokens)
   # tokens =  symap['-'](), Value(1), symap['+'](), Value(2), END()
   # tokens = symap['-'](), Value(1), END()
