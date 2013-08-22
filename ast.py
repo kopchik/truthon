@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from useful.mstring import s
+from io import StringIO
 import sys
 
 symap = {}
@@ -34,7 +35,7 @@ class prefix:
 
   def __call__(self, cls):
     rbp = self.rbp
-    def nud(self, expr):
+    def nud(self):
       return cls(expr(rbp))
     symbol(self.sym).nud = nud
     return cls
@@ -45,8 +46,19 @@ class infix:
     self.lbp = lbp
 
   def __call__(self, cls):
-    def led(self, left, expr):
+    def led(self, left):
       return cls(left, expr(self.lbp))
+    symbol(self.sym, self.lbp).led = led
+    return cls
+
+class postfix:
+  def __init__(self, sym, lbp):
+    self.sym = sym
+    self.lbp = lbp
+
+  def __call__(self, cls):
+    def led(self, left):
+      return cls(left)
     symbol(self.sym, self.lbp).led = led
     return cls
 
@@ -57,7 +69,7 @@ class infix_r:
     self.lbp = lbp
 
   def __call__(self, cls):
-    def led(self, left, expr):
+    def led(self, left):
       return cls(left, expr(self.lbp-1))
     symbol(self.sym, self.lbp).led = led
     return cls
@@ -66,12 +78,14 @@ class Value:
   lbp = 0
   def __init__(self, value):
     self.value = value
-  def nud(self, expr):
+  def nud(self):
     return self
   def __repr__(self):
     cls = self.__class__.__name__
     # return "(%s %s)" % (cls, self.value)
     return "%s" % (self.value)
+  def codegen(self):
+    return self.value
 
 class END:
   lbp = 0
@@ -99,25 +113,37 @@ class Unary:
     cls = self.__class__.__name__
     return "(%s %s)" % (cls, self.value)
 
+
 #########
 # UNARY #
 #########
 
 @prefix('-', 100)
 class Minus(Unary):
-  pass
+  def type(self):
+    return self.value.type()
 
 @prefix('+', 100)
 class Plus(Unary):
-  pass
+  def codegen(self):
+    # left = self.left
+    # ltype = left.type()
+    return self.value.codegen()
 
 @prefix('p', 0)
 class Print(Unary):
-  pass
+  def codegen(self):
+    return "printf(%s);" % self.value.codegen()
 
 @prefix('->', 2)
 class Lambda0(Unary):
+  def codegen(self):
+    return self.value.codegen()
+
+@postfix('!', 3)
+class CALL(Unary):
   pass
+
 
 ##########
 # BINARY #
@@ -125,47 +151,61 @@ class Lambda0(Unary):
 
 @infix('+', 10)
 class Add(Binary):
-  pass
+  def codegen(self):
+    return "add(%s, %s)" % (self.left.codegen(), self.right.codegen())
 
 
 @infix('-', 10)
 class Sub(Binary):
-  pass
+  def codegen(self):
+    return "sub(%s, %s)" % self.left.codegen(), self.right.codegen()
 
 
 @infix_r('^', 30)
 class Pow(Binary):
   pass
 
-@infix('=', 1)
+@infix_r('=', 1)
 class Eq(Binary):
-  pass
+  def codegen(self):
+    if isinstance(self.right, (Lambda, Lambda0)):
+      r  = "void %s(void)\n" % self.left
+      r += "{%s}" % self.right.codegen()
+      return r
+    else:
+      return "%s = %s" % (self.left.codegen(), self.right.codegen())
 
 @infix('->', 2)
 class Lambda(Binary):
   pass
 
-class Expr:
-  cur = None
-  nxt = None
 
-  def __init__(self, e):
-    self.e = iter(e)
-    self.shift()
 
-  def shift(self):
-    self.cur = self.nxt
-    self.nxt = next(self.e)
-    return (self.cur, self.nxt)
+###################
+# PRATT MACHINERY #
+###################
 
-  def expr(self, rbp=0):
-    expr = self.expr
-    self.shift()
-    left = self.cur.nud(expr)
-    while rbp < self.nxt.lbp:
-      self.shift()
-      left = self.cur.led(left, expr)
-    return left
+def shift():
+  global nxt, e
+  return nxt, next(e)
+
+def expr(rbp=0):
+  global cur, nxt
+  cur, nxt = shift()
+  left = cur.nud()
+  while rbp < nxt.lbp:
+    cur, nxt = shift()
+    left = cur.led(left)
+  return left
+
+def parse(tokens):
+  global cur, nxt, e
+  cur = nxt = None
+  e = tokens
+  cur, nxt = shift()
+  return expr()
+
+
 
 def tokenizer(s):
   tokens = s.split()
@@ -177,14 +217,46 @@ def tokenizer(s):
   yield END()
 
 def main():
-  #tokens = tokenizer("p x = 1 ^ 2 ^ 3 + 1")
-  tokens  = tokenizer("myfunc = 1 + -> 1 + b")
-  tokens = list(tokens)
-  # tokens =  symap['-'](), Value(1), symap['+'](), Value(2), END()
-  # tokens = symap['-'](), Value(1), END()
-  expr = Expr(tokens)
-  print(expr.expr())
+  out = StringIO()
+  out.write(preamble)
 
+
+
+  # raw = "p x = 1 ^ 2 ^ 3 + 1"
+  # raw = "myfunc = 1 + -> 1 + b"
+  # raw = "main = -> p \"OPA\""
+  raw = \
+  """
+  x = 1 + 2
+  main = -> p x
+  """
+  for r in raw.split('\n'):
+    if not r or r.isspace():
+      continue
+    tokens = tokenizer(r)
+    e = parse(tokens)
+    # expr = Expr(tokenizer(r))
+    # e = expr.expr()
+    code = e.codegen()
+    out.write(code)
+    out.write(";\n\n")
+
+
+  with open("/tmp/test.c", "w") as fd:
+    out_raw  = out.getvalue()
+    print(out_raw)
+    fd.write(out_raw)
+
+preamble = \
+"""
+#include <stdio.h>
+int add(int a, int b) {
+  return a+b;}
+
+int sub(int a, int b) {
+  return a-b;}
+
+"""
 
 if __name__ == '__main__':
   main()
