@@ -1,4 +1,4 @@
-from ast import symap, Value, END
+from pratt import symap, Value, END
 
 def tokenize(s):
   tokens = s.split()

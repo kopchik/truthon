@@ -29,25 +29,19 @@ class Unary:
 
 @prefix('-', 100)
 class Minus(Unary):
-  def type(self):
-    return self.value.type()
+  pass
 
 @prefix('+', 100)
 class Plus(Unary):
-  def codegen(self):
-    # left = self.left
-    # ltype = left.type()
-    return self.value.codegen()
+  pass
 
 @prefix('p', 0)
 class Print(Unary):
-  def codegen(self):
-    return "printf(%s);" % self.value.codegen()
+  pass
 
 @prefix('->', 2)
 class Lambda0(Unary):
-  def codegen(self):
-    return self.value.codegen()
+  pass
 
 @postfix('!', 3)
 class CALL(Unary):
@@ -60,15 +54,11 @@ class CALL(Unary):
 
 @infix('+', 10)
 class Add(Binary):
-  def codegen(self):
-    return "add(%s, %s)" % (self.left.codegen(), self.right.codegen())
-
+  pass
 
 @infix('-', 10)
 class Sub(Binary):
-  def codegen(self):
-    return "sub(%s, %s)" % self.left.codegen(), self.right.codegen()
-
+  pass
 
 @infix_r('^', 30)
 class Pow(Binary):
@@ -76,25 +66,8 @@ class Pow(Binary):
 
 @infix_r('=', 1)
 class Eq(Binary):
-  def codegen(self):
-    if isinstance(self.right, (Lambda, Lambda0)):
-      r  = "void %s(void)\n" % self.left
-      r += "{%s}" % self.right.codegen()
-      return r
-    else:
-      return "%s = %s" % (self.left.codegen(), self.right.codegen())
+  pass
 
 @infix('->', 2)
 class Lambda(Binary):
   pass
-
-preamble = \
-"""
-#include <stdio.h>
-int add(int a, int b) {
-  return a+b;}
-
-int sub(int a, int b) {
-  return a-b;}
-
-"""

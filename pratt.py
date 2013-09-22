@@ -91,8 +91,7 @@ class Value:
     cls = self.__class__.__name__
     # return "(%s %s)" % (cls, self.value)
     return "%s" % (self.value)
-  def codegen(self):
-    return self.value
+
 
 class END:
   lbp = 0
