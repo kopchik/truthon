@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
-from pratt import prefix, infix, infix_r, postfix
+from pratt import prefix, infix, infix_r, postfix, brackets, \
+  symap, parse as prattparse
+from indent import parse as indentparse, traverse
+from tokenizer2 import tokenize
 
-#####################
-# SOME OP TEMPLATES #
-#####################
+
+#############
+# TEMPLATES #
+#############
 
 class Binary:
   def __init__(self, left, right):
@@ -14,6 +18,7 @@ class Binary:
   def __repr__(self):
     cls = self.__class__.__name__
     return "(%s %s %s)" % (cls, self.left, self.right)
+
 
 class Unary:
   def __init__(self, value):
@@ -72,6 +77,14 @@ class Eq(Binary):
 class Lambda(Binary):
   pass
 
+@brackets('(',')')
+class Parens(Unary):
+  pass
+
+@infix(',', 1)
+class Comma(Binary):
+  pass
+
 class Fun:
   def __init__(self, name, args, body):
     self.name = name
@@ -80,3 +93,28 @@ class Fun:
   def __repr__(self):
     cls = self.__class__.__name__
     return "(%s (%s) %s)" % (cls, self.args, self.body)
+
+def parse(raw):
+      # PARSE INDENTATION
+      tree = indentparse(raw)
+      print("\n*after parsing indent:\n", tree)
+
+      # PARSE OPERATORS
+      traverse(tree, lambda s: prattparse(tokenize(s)))
+      print("\n*after parsing operators:\n", tree)
+
+      # PARSE TOP-LEVEL FUNCTION DEFINITIONS
+      def funcdef(e):
+        if not isinstance(e, Eq):
+          return e
+        name = e.left
+        body = e.right
+        assert isinstance(body, Lambda0), \
+          "only lambdas without args are currently supported"
+        return Fun(name, None, body.value)
+      traverse(tree, funcdef, depth=0)
+      print("\n*after parsing top-level functions:\n", tree)
+
+      # MERGE COMMA
+      #TODO: MERGE CODE BLOCKS
+      #TODO: MAIN() args
