@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ast import prefix, infix, infix_r, postfix
+from pratt import prefix, infix, infix_r, postfix
 
 #####################
 # SOME OP TEMPLATES #
@@ -71,3 +71,12 @@ class Eq(Binary):
 @infix('->', 2)
 class Lambda(Binary):
   pass
+
+class Fun:
+  def __init__(self, name, args, body):
+    self.name = name
+    self.args = args
+    self.body = body
+  def __repr__(self):
+    cls = self.__class__.__name__
+    return "(%s (%s) %s)" % (cls, self.args, self.body)

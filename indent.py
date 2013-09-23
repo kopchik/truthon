@@ -27,6 +27,17 @@ def indent_parse(annotated, bd=0):
   return result
 
 
+def traverse(tree, f, depth=666):
+  """traverse tree produced by indent
+  """
+  for i,node in enumerate(tree):
+    if isinstance(node, list):
+      if depth > 0:
+        traverse(node, f, depth-1)
+    else:
+      tree[i] = f(node)
+
+
 def parse(text):
   "annotate each line with its indentation, then parse"
   annotated = map(lambda l: (get_indent(l), l), text.splitlines())

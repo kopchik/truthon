@@ -117,8 +117,15 @@ def expr(rbp=0):
   return left
 
 def parse(tokens):
+  assert symap, "No operators registered." \
+    "Please define at least one operator decorated with infix()/prefix()/etc"
   global cur, nxt, e
   cur = nxt = None
   e = tokens
   cur, nxt = shift()
   return expr()
+
+
+if __name__ == '__main__':
+  import ast as _
+  from tokenizer import tokenize

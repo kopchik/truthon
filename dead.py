@@ -2,10 +2,11 @@
 
 from io import StringIO
 import argparse
-import sys
 
 from tokenizer import tokenize
-from pratt import parse
+from pratt import parse as prattparse
+from indent import parse as indentparse, traverse
+from ast import Eq, Fun, Lambda0
 
 def main():
   parser = argparse.ArgumentParser()
@@ -17,12 +18,28 @@ def main():
     with open(ifname) as fd:
       raw = fd.read()
 
-      for r in raw.split('\n'):
-        if not r or r.isspace():
-          continue
-        tokens = tokenize(r)
-        ast = parse(tokens)
-        print(ast, type(ast), ast.value)
+      # PARSE INDENTATION
+      tree = indentparse(raw)
+      print("\n*after parsing indent:\n", tree)
+
+      # PARSE OPERATORS
+      traverse(tree, lambda s: prattparse(tokenize(s)))
+      print("\n*after parsing operators:\n", tree)
+
+      # PARSE TOP-LEVEL FUNCTION DEFINITIONS
+      def funcdef(e):
+        if not isinstance(e, Eq):
+          return e
+        name = e.left
+        body = e.right
+        assert isinstance(body, Lambda0), \
+          "only lambdas without args are currently supported"
+        return Fun(name, None, body.value)
+      traverse(tree, funcdef, depth=0)
+      print("\n*after parsing top-level functions:\n", tree)
+
+      #TODO: MERGE CODE BLOCKS
+      #TODO: MAIN() args
 
 if __name__ == '__main__':
   main()
