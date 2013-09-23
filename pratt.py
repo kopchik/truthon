@@ -15,8 +15,8 @@ def symbol(sym, lbp=0):
     Sym = symap[sym]
   except KeyError:
     class Sym: pass
-    Sym.__name__ = 'Sym(%s)' % sym
-    Sym.__repr__ = lambda _: 'Sym(%s)' % sym
+    Sym.__name__ = "Sym('%s')" % sym
+    Sym.__repr__ = lambda _: "Sym('%s')" % sym
     Sym.sym = sym
     Sym.lbp = lbp
     symap[sym] = Sym
@@ -24,13 +24,6 @@ def symbol(sym, lbp=0):
     Sym.lbp = max(lbp, Sym.lbp)
   return Sym
 
-
-def method(s):
-    # decorator
-    assert issubclass(s, symbol_base)
-    def bind(fn):
-        setattr(s, fn.__name__, fn)
-    return bind
 
 class prefix:
   def __init__(self, sym, rbp):
@@ -83,6 +76,7 @@ class postfix:
 
 class Value:
   lbp = 0
+  sym = None
   def __init__(self, value):
     self.value = value
   def nud(self):
@@ -90,13 +84,30 @@ class Value:
   def __repr__(self):
     cls = self.__class__.__name__
     # return "(%s %s)" % (cls, self.value)
-    return "%s" % (self.value)
+    return "%s(%s)" % (cls, self.value)
 
 
 class END:
   lbp = 0
   def __repr__(self):
     return "END"
+
+
+class brackets:
+  def __init__(self, open, close):
+    self.open = open
+    self.close = close
+
+  def __call__(self, cls):
+    open = self.open
+    close = self.close
+    def nud(self):
+      e = expr()
+      advance(close)
+      return cls(e)
+    symbol(open).nud = nud
+    symbol(close)
+    return cls
 
 
 ###################
@@ -107,6 +118,14 @@ def shift():
   global nxt, e
   return nxt, next(e)
 
+
+def advance(sym=None):
+  global cur, nxt
+  cur, nxt = shift()
+  if sym and cur.sym != sym:
+      raise SyntaxError("Expected %r" % sym)
+
+
 def expr(rbp=0):
   global cur, nxt
   cur, nxt = shift()
@@ -116,6 +135,7 @@ def expr(rbp=0):
     left = cur.led(left)
   return left
 
+
 def parse(tokens):
   assert symap, "No operators registered." \
     "Please define at least one operator decorated with infix()/prefix()/etc"
@@ -124,8 +144,3 @@ def parse(tokens):
   e = tokens
   cur, nxt = shift()
   return expr()
-
-
-if __name__ == '__main__':
-  import ast as _
-  from tokenizer import tokenize
