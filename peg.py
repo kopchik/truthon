@@ -82,14 +82,15 @@ class Re(Grammar):
   log = Log("re")
 
   def parse(self, text, pos=0):
-    m = re.match(WSPACE+self.regexp+WSPACE, text[pos:])
+    regexp = "%s(%s)%s" % (WSPACE,self.regexp,WSPACE)
+    m = re.match(regexp, text[pos:])
     if not m:
       self.log.debug("no match: \"{}\" ~= \"{}\"" \
                      .format(self.regexp, text[pos:]))
       raise NoMatch("syntax error", text, pos)
     self.log.notice("\"{}\" ~= \"{}\"" \
                     .format(self.regexp, text[pos:pos+m.end()]))
-    r = m.group()
+    r = m.groups()[0]
     return ((self.__class__), r), pos+m.end()
 
   def __repr__(self):
