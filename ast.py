@@ -127,9 +127,17 @@ def parse(raw):
         if isinstance(body, Lambda0):
           return Fun(name, None, body.value)
         elif isinstance(body, Lambda):
-          return Fun(name, body.left, body.right)
+          args = body.left
+          if isinstance(args, Parens):  # remove extra parens
+            args = args.value
+          if isinstance(args, Comma):  # unpack CSV into list
+            args = args.values
+          if not isinstance(args, list):  # convert single argument to a list
+            args = [args]
+          return Fun(name, args, body.right)
       traverse(tree, funcdef, depth=0)
       print("\n*after parsing top-level functions:\n", tree)
 
       #TODO: MERGE CODE BLOCKS
+      #TODO: clear
       #TODO: MAIN() args
