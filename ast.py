@@ -3,7 +3,7 @@
 from pratt import prefix, infix, infix_r, postfix, brackets, \
   symap, parse as prattparse
 from indent import parse as indentparse, traverse
-from tokenizer2 import tokenize
+from tokenizer import tokenize
 
 
 #############
@@ -82,17 +82,32 @@ class Parens(Unary):
   pass
 
 @infix(',', 1)
-class Comma(Binary):
-  pass
+class Comma:
+  """ Two and more commas in a row will be
+      merged into one
+  """
+  def __init__(self, left, right):
+    self.values = []
+    if isinstance(left, Comma):
+      self.values += left.values + [right]
+    else:
+      self.values = [left, right]
+
+  def __repr__(self):
+    cls = self.__class__.__name__
+    return "(%s %s)" % (cls, self.values)
+
 
 class Fun:
   def __init__(self, name, args, body):
     self.name = name
     self.args = args
     self.body = body
+
   def __repr__(self):
     cls = self.__class__.__name__
     return "(%s (%s) %s)" % (cls, self.args, self.body)
+
 
 def parse(raw):
       # PARSE INDENTATION
@@ -109,12 +124,12 @@ def parse(raw):
           return e
         name = e.left
         body = e.right
-        assert isinstance(body, Lambda0), \
-          "only lambdas without args are currently supported"
-        return Fun(name, None, body.value)
+        if isinstance(body, Lambda0):
+          return Fun(name, None, body.value)
+        elif isinstance(body, Lambda):
+          return Fun(name, body.left, body.right)
       traverse(tree, funcdef, depth=0)
       print("\n*after parsing top-level functions:\n", tree)
 
-      # MERGE COMMA
       #TODO: MERGE CODE BLOCKS
       #TODO: MAIN() args
