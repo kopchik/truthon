@@ -1,1 +1,1 @@
-main = (argv) -> p "Hello, World!"
+main = (argc, argv) -> p "Hello, World!"
