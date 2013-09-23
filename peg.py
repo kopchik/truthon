@@ -69,10 +69,6 @@ class Grammar(metaclass=Meta):
   def parse(self, text, pos=0):
     raise NotImplementedError
 
-  def process(self, result):
-    return result
-
-
 def to_plural(inst):
   return (inst.__class__.name + "s")
 
@@ -92,9 +88,9 @@ class Re(Grammar):
                      .format(self.regexp, text[pos:]))
       raise NoMatch("syntax error", text, pos)
     self.log.notice("\"{}\" ~= \"{}\"" \
-                    .format(self.regexp, text[pos:]))
-    r = self.process(m.groupdict())
-    return r, pos+m.end()
+                    .format(self.regexp, text[pos:pos+m.end()]))
+    r = m.group()
+    return ((self.__class__), r), pos+m.end()
 
   def __repr__(self):
     cls = self.__class__.__name__
@@ -157,7 +153,6 @@ class All(Grammar):
       thing = Thing()
       r, pos = thing.parse(text, pos)
       result.update(r)
-    result = self.process(result)
     return result, pos
 
 
@@ -258,7 +253,7 @@ class SomeOf(Grammar):
         break
     if not result:
       raise NoMatch("syntax error", text, pos)
-    return self.process(result), pos
+    return result, pos
 
 
 def SOMEOF(*items):
