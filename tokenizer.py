@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from pratt import Value, END as PRATTEND
+from pratt import Value
 from peg import RE, SOMEOF, ENDL, MAYBE, S
 from ast import symap
 
@@ -41,6 +41,4 @@ def tokenize(s):
     v = v.strip()  #TODO: fix peg
     if v in symap: tokens += [symap[v]()]
     else:          tokens += [Value(v)]
-  tokens += [PRATTEND]
-  print(tokens)
-  return iter(tokens)
+  return tokens

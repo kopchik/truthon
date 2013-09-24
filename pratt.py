@@ -5,7 +5,7 @@ Pratt-like parser.
 Inspired by http://effbot.org/zone/simple-top-down-parsing.htm
 """
 
-from io import StringIO
+from itertools import chain
 import sys
 
 symap = {}
@@ -141,6 +141,6 @@ def parse(tokens):
     "Please define at least one operator decorated with infix()/prefix()/etc"
   global cur, nxt, e
   cur = nxt = None
-  e = tokens
+  e = chain(tokens, [END])
   cur, nxt = shift()
   return expr()
