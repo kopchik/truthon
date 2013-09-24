@@ -87,16 +87,9 @@ If a program must not silently fail there is a method to provisionally allocate
 required amount of memory.
 
 
-Types:
-  Start with capital letter
-
 Why static:
   Just today I found typing bugs in pypeg and modgrammar. I see typing
   problems almost every day in many programs and libraries!
-
-Comparing to C:
-  better support for variable number of arguments (you know the number
-  of passed arguments, you can access them via normal array)
 
 
 Terminology
@@ -116,21 +109,14 @@ Other project names
 1. Concrete mixer
 
 
-TODO
-----
-
-Pattern matching  
-ADT??
-
-
 References
 ----------
 
-### Top-level grammar
+### Simple top-level parsing
 
 1. http://en.wikipedia.org/wiki/Parsing_expression_grammar
 
-### Expressions
+### Expression parsing (with precedence)
 
 1. http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 1. http://effbot.org/zone/simple-top-down-parsing.htm
