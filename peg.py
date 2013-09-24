@@ -21,7 +21,8 @@ class Grammar:
 
 
 class RE(Grammar):
-  def __init__(self, pattern):
+  def __init__(self, pattern, comment=None):
+    self.comment = comment
     self.pattern_orig = pattern
     self.pattern = re.compile("\s*(%s)\s*"%pattern)
 
@@ -33,6 +34,8 @@ class RE(Grammar):
     return (self, m.groups()[0]), pos+m.end()
 
   def __repr__(self):
+    if self.comment:
+      return self.comment
     cls = self.__class__.__name__
     return "%s(\"%s\")" % (cls, self.pattern_orig)
 

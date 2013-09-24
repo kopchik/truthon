@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 from pratt import Value
-from peg2 import RE, SOMEOF, ENDL, MAYBE, S
+from peg import RE, SOMEOF, ENDL, MAYBE, S
 from ast import symap
 
 # CONSTANTS
-FLOATCONST = RE(r'[-]{0,1}\d+\.\d*')
-INTCONST = RE(r'[-]{0,1}\d+')
-STRCONST = RE(r'"(.*)"')
+FLOATCONST = RE(r'[-]{0,1}\d+\.\d*', "FLOAT")
+INTCONST   = RE(r'[-]{0,1}\d+', "INT")
+STRCONST   = RE(r'"(.*)"', "STR")
 CONST = FLOATCONST | INTCONST | STRCONST
 
 
@@ -21,7 +21,7 @@ COMMENT = SHComment | CComment | CPPComment
 END = MAYBE(COMMENT) + ENDL
 
 # IDENTIFIER (FUNCTION NAMES, ETC)
-ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*')
+ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*', "ID")
 
 
 
