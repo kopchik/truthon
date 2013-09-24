@@ -37,7 +37,8 @@ class RE(Grammar):
     if self.comment:
       return self.comment
     cls = self.__class__.__name__
-    return "%s(\"%s\")" % (cls, self.pattern_orig)
+    # return "%s(\"%s\")" % (cls, self.pattern_orig)
+    return "%s" % (cls)
 
 
 
@@ -105,7 +106,7 @@ class ALL(Composer):
     return result, pos
 
 
-class S(RE):
+class SYMBOL(RE):
   def __init__(self, symbol):
     super().__init__(re.escape(symbol))
 

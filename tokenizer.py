@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
+from peg import RE, SOMEOF, ENDL, MAYBE, SYMBOL
 from pratt import Value
-from peg import RE, SOMEOF, ENDL, MAYBE, S
 from ast import symap
 
 # CONSTANTS
@@ -10,27 +10,26 @@ INTCONST   = RE(r'[-]{0,1}\d+', "INT")
 STRCONST   = RE(r'"(.*)"', "STR")
 CONST = FLOATCONST | INTCONST | STRCONST
 
-
 # COMMENTS
-SHComment  = RE(r'\#.*')
-CPPComment = RE(r'//.*')
-CComment   = RE(r'/\*.*?\*/')
-COMMENT = SHComment | CComment | CPPComment
+SHELLCOMMENT = RE(r'\#.*')
+CPPCOMMENT   = RE(r'//.*')
+CCOMMENT     = RE(r'/\*.*?\*/')
+COMMENT = SHELLCOMMENT | CCOMMENT | CPPCOMMENT
+
 # END is like ENDL (end of line)
 # but allows trailing comments
 END = MAYBE(COMMENT) + ENDL
 
-# IDENTIFIER (FUNCTION NAMES, ETC)
+# IDENTIFIER (FUNCTION NAMES, VARIABLES, ETC)
 ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*', "ID")
 
 
-
 def tokenize(s):
-  OP = S("<bootstrap>")
+  OP = SYMBOL("<bootstrap>")
   # sort by size is necessary for PEG parsers
   # because first match wins.
   for sym in sorted(symap.keys(), key=len, reverse=True):
-    OP = OP | S(sym)
+    OP = OP | SYMBOL(sym)
   PROG = SOMEOF([CONST, OP, ID, COMMENT])
 
   parser = PROG
