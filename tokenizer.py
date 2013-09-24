@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from pratt import Value
-from peg import RE, SOMEOF, ENDL, MAYBE, S
+from peg2 import RE, SOMEOF, ENDL, MAYBE, S
 from ast import symap
 
 # CONSTANTS
@@ -31,14 +31,13 @@ def tokenize(s):
   # because first match wins.
   for sym in sorted(symap.keys(), key=len, reverse=True):
     OP = OP | S(sym)
-  PROG = SOMEOF(CONST, OP, ID, COMMENT)
+  PROG = SOMEOF([CONST, OP, ID, COMMENT])
 
-  parser = PROG()
+  parser = PROG
   r, pos = parser.parse(s)
   print(r)
   tokens = []
   for t,v in r:
-    v = v.strip()  #TODO: fix peg
     if v in symap: tokens += [symap[v]()]
     else:          tokens += [Value(v)]
   return tokens
