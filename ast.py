@@ -110,34 +110,34 @@ class Fun:
 
 
 def parse(raw):
-      # PARSE INDENTATION
-      tree = indentparse(raw)
-      print("\n*after parsing indent:\n", tree)
+  # PARSE INDENTATION
+  tree = indentparse(raw)
+  print("\n*after parsing indent:\n", tree)
 
-      # PARSE OPERATORS AND DEFINITIONS
-      traverse(tree, lambda s: prattparse(tokenize(s)))
-      print("\n*after parsing operators:\n", tree)
+  # PARSE OPERATORS AND DEFINITIONS
+  traverse(tree, lambda s: prattparse(tokenize(s)))
+  print("\n*after parsing operators:\n", tree)
 
-      # PARSE TOP-LEVEL FUNCTION DEFINITIONS
-      def funcdef(e):
-        if not isinstance(e, Eq):
-          return e
-        name = e.left
-        body = e.right
-        if isinstance(body, Lambda0):
-          return Fun(name, None, body.value)
-        elif isinstance(body, Lambda):
-          args = body.left
-          if isinstance(args, Parens):  # remove extra parens
-            args = args.value
-          if isinstance(args, Comma):  # unpack CSV into list
-            args = args.values
-          if not isinstance(args, list):  # convert single argument to a list
-            args = [args]
-          return Fun(name, args, body.right)
-      traverse(tree, funcdef, depth=0)
-      print("\n*after parsing top-level functions:\n", tree)
+  # PARSE TOP-LEVEL FUNCTION DEFINITIONS
+  def funcdef(e):
+    if not isinstance(e, Eq):
+      return e
+    name = e.left
+    body = e.right
+    if isinstance(body, Lambda0):
+      return Fun(name, None, body.value)
+    elif isinstance(body, Lambda):
+      args = body.left
+      if isinstance(args, Parens):  # remove extra parens
+        args = args.value
+      if isinstance(args, Comma):  # unpack CSV into list
+        args = args.values
+      if not isinstance(args, list):  # convert single argument to a list
+        args = [args]
+      return Fun(name, args, body.right)
+  traverse(tree, funcdef, depth=0)
+  print("\n*after parsing top-level functions:\n", tree)
 
-      #TODO: MERGE CODE BLOCKS
-      #TODO: clear
-      #TODO: MAIN() args
+  #TODO: MERGE CODE BLOCKS
+  #TODO: clear
+  #TODO: MAIN() args
