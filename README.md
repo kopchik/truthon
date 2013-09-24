@@ -33,7 +33,7 @@ Goals
 
 1. Tries to be safe and friendly
 1. Static typing
-1. Python-like syntax
+1. ML-like syntax (inspired by LiveScript)
 1. Public/Protected/Private attributes of the classes
 1. Built-in regexp support
 1. Built-in shell commands invocation
@@ -70,39 +70,33 @@ Why static:
   Just today I found typing bugs in pypeg and modgrammar. I see typing
   problems almost every day in many programs and libraries!
 
-Future:
+TODO:
     pattern matching  
     ADT??
-
-Changes from python:
-  No tabs allowed for indentation
 
 Comparing to C:
   better support for variable number of arguments (you know the number
   of passed arguments, you can access them via normal array)
-
-Translator design:
-  Top-down PEG parser because it's simple.
-  1. Ident parser
-  2. Regexp parser
-  3. AST composer
-
-TODO:
-  wildcard syntax? def X(**things)
 
 
 Phases:
   1. Indent parsing
     Parses source into tree with scopes defined
     by indentation (python-like).
-  2. Grammar parsing
+  1. Grammar parsing
     Build abstract syntax tree over the previous tree.
-    It's ``top-down'' parser.
-  3. Translation to llvm intermediate representation.
+    It's a ``top-down'' parser. No any semantic analysis yet,
+    the tree is 1 to 1 match the original program.
+  1. Semantic analysis
+    Find functions, loops, branches and other main building
+    blocks.
+  1. Type inference
+    The compiler tries guess the types of variables.
+  1. Translation to llvm intermediate representation.
     AST traversing and code generation.
-  4. Sanity check
+  1. Sanity check
     Checks that, e.g., main() has correct arguments and so on.
-  5. Assembler invocation
+  1. Assembler invocation
     Final phase to build the program.
 
 

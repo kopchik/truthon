@@ -114,7 +114,7 @@ def parse(raw):
       tree = indentparse(raw)
       print("\n*after parsing indent:\n", tree)
 
-      # PARSE OPERATORS
+      # PARSE OPERATORS AND DEFINITIONS
       traverse(tree, lambda s: prattparse(tokenize(s)))
       print("\n*after parsing operators:\n", tree)
 
