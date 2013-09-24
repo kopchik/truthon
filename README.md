@@ -7,17 +7,21 @@ My experiments with compilers, do not use!
 FILES
 -----
 
-1. grammar.py  -- formal grammar definition
-1. peg.py      -- Peg parser that allows to define grammar in a bnf-like way
+1. dead.py     -- just launcher of all stuff
+1. peg.py      -- PEG parser that allows to define grammar in a bnf-like way
 1. pratt.py    -- Pratt parser, used to parse expressions
+1. tokenizer.py -- split input into tokens, uses PEG
+1. ast.py      -- abstract syntax tree and rewrite tools
+1. codegen.py  -- a small helper script to write correctly-indented code
+
 
 
 Stages
 ------
 
 1. Indent parse
-1. Formal grammar parsing
 1. Expression parsing
+1. Several passes of tree rewrites
 1. Type validation
 1. Code generation
 1. asm generation
@@ -52,6 +56,13 @@ Goals
 
 
 
+
+The normal assumtion is that memory allocation will never fail.
+This is because most of programs anyway don't know how to deal with these errors.
+If a program must not silently fail there is a method to provisionally allocate
+required amount of memory.
+
+
 Types:
   Start with capital letter
 
@@ -60,7 +71,7 @@ Why static:
   problems almost every day in many programs and libraries!
 
 Future:
-    pattern matching
+    pattern matching  
     ADT??
 
 Changes from python:
