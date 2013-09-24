@@ -1,37 +1,49 @@
 Truthon
 =======
 
-My experiments with compilers, do not use!
+My experiments with compilers.
 
 
-FILES
------
+How it works
+------------
 
-1. dead.py     -- just launcher of all stuff
-1. peg.py      -- PEG parser that allows to define grammar in a bnf-like way
-1. pratt.py    -- Pratt parser, used to parse expressions
-1. tokenizer.py -- split input into tokens, uses PEG
-1. ast.py      -- abstract syntax tree and rewrite tools
-1. codegen.py  -- a small helper script to write correctly-indented code
+  1. Indent parsing
+
+     Parses source into tree with scopes defined
+     by indentation (python-like).
+
+  1. Grammar parsing
+
+     Build abstract syntax tree over the previous tree.
+     It's a ``top-down'' parser. No any semantic analysis yet,
+     the tree is 1 to 1 match the original program.
+
+  1. Semantic analysis
+
+     Find functions, loops, branches and other main building
+     blocks.
+
+  1. Type inference
+
+     The compiler tries guess the types of variables.
+
+  1. Sanity check
+
+     Checks that, e.g., main() has correct arguments and so on.
+
+  1. Code generation
+
+     AST traversing and generation of ``llvm intermediate representation''.
+
+  1. Compilation
+     Invoce llvm to build the program.
 
 
 
-Stages
-------
+Design Goals
+------------
 
-1. Indent parse
-1. Expression parsing
-1. Several passes of tree rewrites
-1. Type validation
-1. Code generation
-1. asm generation
-1. Compile and link
-
-
-Goals
------
-
-1. Tries to be safe and friendly
+1. Be safe, compact and friendly
 1. Static typing
 1. ML-like syntax (inspired by LiveScript)
 1. Public/Protected/Private attributes of the classes
@@ -55,7 +67,19 @@ Goals
 1. Error-resistant coding
 
 
+FILES
+-----
 
+1. dead.py     -- just launcher of all stuff
+1. peg.py      -- PEG parser that allows to define grammar in a bnf-like way
+1. pratt.py    -- Pratt parser, used to parse expressions
+1. tokenizer.py -- split input into tokens, uses PEG
+1. ast.py      -- abstract syntax tree and rewrite tools
+1. codegen.py  -- a small helper script to write correctly-indented code
+
+
+Other
+-----
 
 The normal assumtion is that memory allocation will never fail.
 This is because most of programs anyway don't know how to deal with these errors.
@@ -70,56 +94,46 @@ Why static:
   Just today I found typing bugs in pypeg and modgrammar. I see typing
   problems almost every day in many programs and libraries!
 
-TODO:
-    pattern matching  
-    ADT??
-
 Comparing to C:
   better support for variable number of arguments (you know the number
   of passed arguments, you can access them via normal array)
 
 
-Phases:
-  1. Indent parsing
-    Parses source into tree with scopes defined
-    by indentation (python-like).
-  1. Grammar parsing
-    Build abstract syntax tree over the previous tree.
-    It's a ``top-down'' parser. No any semantic analysis yet,
-    the tree is 1 to 1 match the original program.
-  1. Semantic analysis
-    Find functions, loops, branches and other main building
-    blocks.
-  1. Type inference
-    The compiler tries guess the types of variables.
-  1. Translation to llvm intermediate representation.
-    AST traversing and code generation.
-  1. Sanity check
-    Checks that, e.g., main() has correct arguments and so on.
-  1. Assembler invocation
-    Final phase to build the program.
+Terminology
+-----------
 
-
-
-
-Terminology:
   1. Parser (definitions are from https://siod.svn.codeplex.com/svn/winsiod/pratt.scm, A simple Pratt-Parser for SIOD: 2-FEB-90, George Carrette, GJC@PARADIGM.COM):
     1. NUD -- NUll left Denotation (op has nothing to its left (prefix))
     1. LED -- LEft Denotation      (op has something to left (postfix or infix))
     1. LBP -- Left Binding Power  (the stickiness to the left)
     1. RBP -- Right Binding Power (the stickiness to the right)
 
-Project name:
-  1. Brainduck (busy)
-  1. Concrete mixer
+
+Other project names
+-------------------
+
+1. Brainduck (busy)
+1. Concrete mixer
 
 
-Literature:
-  Top-level grammar:
-    1. http://en.wikipedia.org/wiki/Parsing_expression_grammar
-  Expressions:
-    1. http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
-    1. http://effbot.org/zone/simple-top-down-parsing.htm
+TODO
+----
+
+Pattern matching  
+ADT??
+
+
+References
+----------
+
+### Top-level grammar
+
+1. http://en.wikipedia.org/wiki/Parsing_expression_grammar
+
+### Expressions
+
+1. http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
+1. http://effbot.org/zone/simple-top-down-parsing.htm
 
 
 CODING GUIDELINES
@@ -127,8 +141,4 @@ CODING GUIDELINES
 
 property? -- boolean property
 
-DESIGN GUIDELINES
-=================
-
-Functions either return value or raise exception.
-
+Functions should either return a value or raise exception.
