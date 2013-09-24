@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from peg import RE, SOMEOF, ENDL, MAYBE, SYMBOL
+from peg import RE, SOMEOF, ENDL, MAYBE, OR, SYMBOL
 from pratt import Value
 from ast import symap
 
@@ -28,9 +28,11 @@ def tokenize(s):
   OP = SYMBOL("<bootstrap>")
   # sort by size is necessary for PEG parsers
   # because first match wins.
+  operators = []
   for sym in sorted(symap.keys(), key=len, reverse=True):
-    OP = OP | SYMBOL(sym)
-  PROG = SOMEOF([CONST, OP, ID, COMMENT])
+    operators += [SYMBOL(sym)]
+  OPERATOR = OR(operators)
+  PROG = SOMEOF([CONST, OPERATOR, ID, COMMENT])
 
   parser = PROG
   r, pos = parser.parse(s)
