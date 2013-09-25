@@ -14,7 +14,7 @@ def main():
     with open(ifname) as fd:
       raw = fd.read()
       ast = parse(raw)
-      codegen(ast, output="./llvm.ir")
+      codegen(ast, name=ifname, output="./llvm.ir")
 
 if __name__ == '__main__':
   main()
