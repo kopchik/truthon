@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from peg import RE, SOMEOF, ENDL, MAYBE, OR, SYMBOL
+from peg import RE, SOMEOF, MAYBE, OR, SYMBOL
 from pratt import Value
 from ast import symap
 
@@ -16,27 +16,26 @@ CPPCOMMENT   = RE(r'//.*')
 CCOMMENT     = RE(r'/\*.*?\*/')
 COMMENT = SHELLCOMMENT | CCOMMENT | CPPCOMMENT
 
+# TODO: add this to PROG
 # END is like ENDL (end of line)
 # but allows trailing comments
-END = MAYBE(COMMENT) + ENDL
+EOL = RE(r'$', "EOL")  # end of line
+END = EOL | (COMMENT+EOL)
 
 # IDENTIFIER (FUNCTION NAMES, VARIABLES, ETC)
 ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*', "ID")
 
 
 def tokenize(s):
-  OP = SYMBOL("<bootstrap>")
-  # sort by size is necessary for PEG parsers
-  # because first match wins.
+  # put longest operators first because for PEG first match wins
   operators = []
   for sym in sorted(symap.keys(), key=len, reverse=True):
     operators += [SYMBOL(sym)]
-  OPERATOR = OR(operators)
-  PROG = SOMEOF([CONST, OPERATOR, ID, COMMENT])
+  OPERATOR = OR(*operators)
+  PROG = SOMEOF(CONST, OPERATOR, ID, COMMENT) #+ END
 
   parser = PROG
   r, pos = parser.parse(s)
-  print(r)
   tokens = []
   for t,v in r:
     if v in symap: tokens += [symap[v]()]

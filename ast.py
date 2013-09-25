@@ -139,5 +139,8 @@ def parse(raw):
   print("\n*after parsing top-level functions:\n", tree)
 
   #TODO: MERGE CODE BLOCKS
-  #TODO: clear
-  #TODO: MAIN() args
+  #MAIN() args
+  for e in tree:
+    if isinstance(e, Fun) and e.name == 'main':
+
+      break

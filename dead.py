@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-
-from io import StringIO
+from llvmbackend import codegen
+from ast import parse
 import argparse
 
-from ast import parse
 
 def main():
   parser = argparse.ArgumentParser()
@@ -15,7 +14,7 @@ def main():
     with open(ifname) as fd:
       raw = fd.read()
       ast = parse(raw)
-
+      codegen(ast, output="./llvm.ir")
 
 if __name__ == '__main__':
   main()

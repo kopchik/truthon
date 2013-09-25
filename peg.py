@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import re
 
 class NoMatch(Exception):
@@ -11,13 +10,13 @@ class Grammar:
     if isinstance(self, ALL):
       self.things += [other]
       return self
-    return ALL([self, other])
+    return ALL(self, other)
 
   def __or__(self, other):
     if isinstance(self, OR):
       self.things += [other]
       return self
-    return OR([self, other])
+    return OR(self, other)
 
 
 class RE(Grammar):
@@ -30,24 +29,38 @@ class RE(Grammar):
     m = self.pattern.match(text[pos:])
     if not m:
       raise NoMatch("syntax error", text, pos)
-    print(m.groups())
     return (self, m.groups()[0]), pos+m.end()
 
   def __repr__(self):
     if self.comment:
       return self.comment
     cls = self.__class__.__name__
-    # return "%s(\"%s\")" % (cls, self.pattern_orig)
-    return "%s" % (cls)
+    return "%s(\"%s\")" % (cls, self.pattern_orig)
+    # return "%s" % (cls)
+
+
+class SYMBOL(RE):
+  def __init__(self, symbol):
+    super().__init__(re.escape(symbol))
+
+
+########################
+# HIGHER-ORDER PARSERS #
+########################
+
+class Composer(Grammar):
+  def __init__(self, *things):
+    self.things = list(things)
+
+  def __repr__(self):
+    cls  = self.__class__.__name__
+    return "%s(%s)" % (cls, self.things)
 
 
 
-class OR(Grammar):
+class OR(Composer):
   """ First match wins
   """
-  def __init__(self, things):
-    self.things = things
-
   def parse(self, text, pos=0):
     for thing in self.things:
       try:
@@ -57,10 +70,7 @@ class OR(Grammar):
     raise NoMatch("syntax error", text, pos)
 
 
-class SOMEOF(Grammar):
-  def __init__(self, things):
-    self.things = things
-
+class SOMEOF(Composer):
   def parse(self, text, pos=0):
     result = []
     while True:
@@ -68,7 +78,7 @@ class SOMEOF(Grammar):
         try:
           r, pos = thing.parse(text, pos)
           result += [r]
-          break  # break is neccessary because it's a PEG parser and order does matter
+          break  # break is neccessary because it's a PEG parser and the order does matter
         except NoMatch:
           pass
       else:
@@ -78,38 +88,33 @@ class SOMEOF(Grammar):
     return result, pos
 
 
-ENDL = RE(r'$')
-
-class Composer(Grammar):
-  def __init__(self, things):
-    self.things = things
-
 class MAYBE(Composer):
   def parse(self, text, pos=0):
     oldpos = pos
-    result = OrderedDict()
+    result = []
     try:
       for thing in self.things:
         r, pos = thing.parse(text, pos)
-        result.update(r)
+        result += [r]
     except NoMatch:
-      return {}, oldpos
+      return None, oldpos
     return result, pos
 
 
 class ALL(Composer):
   def parse(self, text, pos=0):
-    result = OrderedDict()
+    result = []
     for thing in self.things:
       r, pos = thing.parse(text, pos)
-      result.update(r)
+      result += [r]
     return result, pos
 
 
-class SYMBOL(RE):
-  def __init__(self, symbol):
-    super().__init__(re.escape(symbol))
-
+# class EOL(RE):
+#   super().__init__(r'$', "EOL")
+#   def parse(self, text, pos=0):
+#     r, pos = super().parse(text, pos)
+#     return
 
 if __name__ == '__main__':
   INTCONST = RE(r'[-]{0,1}\d+')
