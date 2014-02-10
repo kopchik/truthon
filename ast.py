@@ -5,6 +5,9 @@ from pratt import prefix, infix, infix_r, postfix, brackets, \
 from indent import parse as indentparse, traverse
 from tokenizer import tokenize
 
+from log import Log
+log = Log('ast')
+
 
 #############
 # TEMPLATES #
@@ -106,17 +109,17 @@ class Fun:
 
   def __repr__(self):
     cls = self.__class__.__name__
-    return "(%s (%s) %s)" % (cls, self.args, self.body)
+    return "(%s %s (%s) %s)" % (cls, self.name, self.args, self.body)
 
 
 def parse(raw):
   # PARSE INDENTATION
-  tree = indentparse(raw)
-  print("\n*after parsing indent:\n", tree)
+  ast = indentparse(raw)
+  log.indent.debug("after parsing indent:", ast)
 
   # PARSE OPERATORS AND DEFINITIONS
-  traverse(tree, lambda s: prattparse(tokenize(s)))
-  print("\n*after parsing operators:\n", tree)
+  traverse(ast, lambda s: prattparse(tokenize(s)))
+  log.pratt.debug("after parsing operators:", ast)
 
   # PARSE TOP-LEVEL FUNCTION DEFINITIONS
   def funcdef(e):
@@ -135,12 +138,12 @@ def parse(raw):
       if not isinstance(args, list):  # convert single argument to a list
         args = [args]
       return Fun(name, args, body.right)
-  traverse(tree, funcdef, depth=0)
-  print("\n*after parsing top-level functions:\n", tree)
+  traverse(ast, funcdef, depth=0)
+  log.topfunc.debug("after parsing top-level functions:", ast)
 
+  return ast
   #TODO: MERGE CODE BLOCKS
   #MAIN() args
-  for e in tree:
+  for e in ast:
     if isinstance(e, Fun) and e.name == 'main':
-
       break
