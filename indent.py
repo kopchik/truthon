@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# TODO: check that indent in spaces, not in tabs
+
 def get_indent(s):
   """Get current indent in symbols"""
   depth = 0
