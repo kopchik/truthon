@@ -91,6 +91,9 @@ Why static:
   Just today I found typing bugs in pypeg and modgrammar. I see typing
   problems almost every day in many programs and libraries!
 
+Why methods instead of functions:
+  Python's namespaces highly polluted with abs, len, sum, all, vars,
+  min/max, next, list, id, to, dict, etc...
 
 Terminology
 -----------
