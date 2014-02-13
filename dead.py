@@ -11,10 +11,10 @@ def main():
   parser.add_argument('input', nargs='+')
   args = parser.parse_args()
 
-  for ifname in args.input:
-    with open(ifname) as fd:
-      raw = fd.read()
-      ast = parse(raw)
+  for fname in args.input:
+    with open(fname) as fd:
+      src = fd.read()
+      ast = parse(src)
 
 if __name__ == '__main__':
   main()
