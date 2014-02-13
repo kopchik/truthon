@@ -25,19 +25,23 @@ END = EOL | (COMMENT+EOL)
 # IDENTIFIER (FUNCTION NAMES, VARIABLES, ETC)
 ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*', "ID")
 
+# put longest operators first because for PEG first match wins
+operators = []
+for sym in sorted(symap.keys(), key=len, reverse=True):
+  operators += [SYMBOL(sym)]
+OPERATOR = OR(*operators)
+PROGRAM = SOMEOF(CONST, OPERATOR, ID, COMMENT) #+ END
 
-def tokenize(s):
-  # put longest operators first because for PEG first match wins
-  operators = []
-  for sym in sorted(symap.keys(), key=len, reverse=True):
-    operators += [SYMBOL(sym)]
-  OPERATOR = OR(*operators)
-  PROG = SOMEOF(CONST, OPERATOR, ID, COMMENT) #+ END
-
-  parser = PROG
-  r, pos = parser.parse(s)
+def tokenize(ast1):
   tokens = []
-  for t,v in r:
-    if v in symap: tokens += [symap[v]()]
-    else:          tokens += [Value(v)]
+  for t in ast1:
+    if isinstance(t, str):
+      r, _ = PROGRAM.parse(t)
+      for t,v in r:
+        if v in symap: tokens += [symap[v]()]
+        else:          tokens += [Value(v)]
+    else:
+      tokens += [t]
+  print(ast1)
+  print(tokens)
   return tokens
