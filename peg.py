@@ -23,7 +23,7 @@ class RE(Grammar):
   def __init__(self, pattern, comment=None):
     self.comment = comment
     self.pattern_orig = pattern
-    self.pattern = re.compile("\s*(%s)\s*"%pattern)
+    self.pattern = re.compile("\s*(%s)\s*" % pattern)
 
   def parse(self, text, pos=0):
     m = self.pattern.match(text[pos:])
@@ -36,7 +36,6 @@ class RE(Grammar):
       return self.comment
     cls = self.__class__.__name__
     return "%s(\"%s\")" % (cls, self.pattern_orig)
-    # return "%s" % (cls)
 
 
 class SYMBOL(RE):
