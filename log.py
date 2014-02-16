@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 from functools import partial
+from termcolor import colored
 import sys
 levels = ["debug", "info", "critical"]
+
+styles = {
+  'debug': {'color': 'blue'},
+  'info': {'color': 'green'},
+  'notice': {'color': 'green', 'attrs': ['bold']},
+  'error': {'color': 'red'},
+  'critical': {'color': 'red', 'attrs': ['reverse']},
+}
 
 
 class Filter:
@@ -20,7 +29,7 @@ class Filter:
     pass
 
   def test(self, verbosity, facility):
-    if self.loglevel >= levels.index(verbosity):
+    if levels.index(verbosity) >= self.loglevel:
       return True
     return False
 logfilter = Filter()
@@ -44,7 +53,9 @@ class Log:
     if logfilter.test(verbosity, facility):
       prefix = ".".join(facility)
       prefix += " {}:".format(verbosity)
-      print(prefix, *msg, file=sys.stderr)
+      style = styles[verbosity]
+      print(colored(" ".join(str(m) for m in msg), **style), file=sys.stderr)
+      # print(prefix, *msg, file=sys.stderr)
     self.path = []
 
 
