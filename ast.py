@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 from pratt import prefix, infix, infix_r, postfix, brackets, \
-  symap, parse as prattparse
-from indent import parse_dents
-from tokenizer import tokenize
+  symap, parse as pratt_parse
 
+from useful.mstring import s
 from log import Log
 log = Log('ast')
 
@@ -34,6 +33,19 @@ class Node:
     return "%s(%s)" % (cls, args)
 
 
+class Bare:
+  def __init__(self, value):
+    self.value = value
+    super().__init__()
+
+  def __repr__(self):
+    cls = self.__class__.__name__
+    return "%s:%s" % (cls, self.value)
+
+  def nud(self):
+    return self.value
+
+
 class Unary(Node):
   fields = ['value']
 
@@ -42,13 +54,32 @@ class Binary(Node):
   fields = ['left', 'right']
 
 
-class DENT(Node):
-  def __init__(self, depth):
-    self.depth = depth
-    super().__init__()
+###########
+# SPECIAL #
+###########
+
+class DENT(Bare):
+  pass
+
+class Id(Bare):
+  pass
+
+##############
+# Data types #
+##############
+
+class Str(Bare):
+  pass
+
+class Block(list):
+  def __init__(self, value):
+    super().__init__(value)
+
   def __repr__(self):
-    cls = self.__class__.__name__
-    return "%s:%s" % (cls, self.depth)
+    return "%s(%s)" % (self.__class__.__name__, super().__repr__())
+
+  def nud(self):
+    return self
 
 #########
 # UNARY #
@@ -105,8 +136,8 @@ class Parens(Unary):
 
 @infix(',', 1)
 class Comma:
-  """ Two and more commas in a row will be
-      merged into one
+  """ Two and more commas in a row
+      will be merged into one.
   """
   def __init__(self, left, right):
     self.values = []
@@ -119,6 +150,56 @@ class Comma:
     cls = self.__class__.__name__
     return "(%s %s)" % (cls, self.values)
 
+##################
+# FORMAL GRAMMAR #
+##################
+
+from peg import RE, SOMEOF, MAYBE, OR, SYMBOL
+
+# CONSTANTS
+FLOATCONST = RE(r'[-]{0,1}\d+\.\d*', comment="FLOAT")
+INTCONST   = RE(r'[-]{0,1}\d+', comment="INT")
+STRCONST   = RE(r'"(.*)"', Str)
+CONST = FLOATCONST | INTCONST | STRCONST
+
+# COMMENTS
+SHELLCOMMENT = RE(r'\#.*')
+CPPCOMMENT   = RE(r'//.*')
+CCOMMENT     = RE(r'/\*.*?\*/')
+COMMENT = SHELLCOMMENT | CCOMMENT | CPPCOMMENT
+
+# TODO: add this to PROG
+# END is like ENDL (end of line)
+# but allows trailing comments
+EOL = RE(r'$', comment="EOL")  # end of line
+END = EOL | (COMMENT+EOL)
+
+# IDENTIFIER (FUNCTION NAMES, VARIABLES, ETC)
+ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*', Id)
+
+# put longest operators first because for PEG first match wins
+operators = []
+for sym in sorted(symap.keys(), key=len, reverse=True):
+  operators += [SYMBOL(sym, symap[sym])]
+OPERATOR = OR(*operators)
+PROGRAM = SOMEOF(CONST, OPERATOR, ID, COMMENT) #+ END
+
+def tokenize(ast1):
+  tokens = []
+  for t in ast1:
+    if isinstance(t, str):
+      ts, l = PROGRAM.parse(t)
+      # assert len(t) == l, "cannot parse %s" % t
+      tokens += ts
+    else:
+      tokens += [t]
+  return tokens
+
+
+#####################
+# INDENTATION PARSE #
+#####################
+
 def get_indent(s):
   """Get current indent in symbols"""
   depth = 0
@@ -126,6 +207,7 @@ def get_indent(s):
     if not c.isspace():
       break
   return depth
+
 
 def add_dents(ast0):
   result = []
@@ -135,13 +217,85 @@ def add_dents(ast0):
     result.append(l)
   return result
 
+
+def add_implicit_dents(ast):
+  c = 0
+  for i,t in enumerate(ast):
+    if isinstance(t, DENT):
+      c = t.value
+    elif hasattr(t, "sym") and t.sym == "->":
+      for t in ast[i:]:
+        if isinstance(t, DENT):
+          if t.value > c:
+            ast.insert(i+1, DENT(t.value))
+          break
+  return ast
+
+
+def parse_blocks(ast, i=0, lvl=0):
+  blks = []
+  while i < len(ast):
+    t = ast[i]
+    if isinstance(t, DENT):
+      if t.value == lvl:
+        blk = []
+        blks.append(blk)
+      elif t.value > lvl:
+        i, sub = parse_blocks(ast, i, lvl=t.value)
+        blk.append(Block(sub))
+        i += 1
+      elif t.value <= lvl:
+        return i, blks
+    else:
+      blk.append(t)
+    i += 1
+  return i, blks
+
+
+
+def pretty_print(ast, lvl=0):
+  prefix = "  "*lvl
+  for e in ast:
+    # print("!", type(e), ast)
+    if isinstance(e, Block):
+      print(prefix, "\nBLOCK:")
+      pretty_print(e, lvl+1)
+    else:
+      print(prefix, e, end=' ')
+  if lvl == 0:
+    print()
+
+
+def precedence(ast):
+  result = []
+  for e in ast:
+    if isinstance(e, Block):
+      print("!! iterating over", e)
+      result += [precedence(Block)]
+    else:
+      expr = pratt_parse(e)
+      print("@@", expr)
+      result.append(expr)
+  return result
+
+
 def parse(raw):
   # PARSE OPERATORS AND DEFINITIONS
-  ast0 = raw.splitlines()
-  ast1 = add_dents(ast0)
-  log.dents.debug("after parsing indentation:\n", ast1)
-  tokens = tokenize(ast1)
-  log.tokenizer.debug("after tokenizer:\n", tokens)
-  ast = prattparse(tokens)
-  log.pratt.debug("after parsing operators:\n", ast)
+  ast = raw.splitlines()
+  ast = add_dents(ast)
+  log.dents.debug("after parsing indentation:\n", ast)
+  ast = tokenize(ast)
+  log.tokenizer.debug("after tokenizer:\n", ast)
+  ast = add_implicit_dents(ast)
+  log.tokenizer.debug("after implicit dents:\n", ast)
+  _, ast = parse_blocks(ast)
+  log.blocks.debug("after block parser:\n", ast)
+  pretty_print(ast)
+  ast = precedence(ast)
+  log.blocks.info("after pratt parser:\n", ast)
+  pretty_print(ast)
+  # ast = pratt_parse(ast)
+  # log.blocks.info("after pratt parse:\n", ast)
+  # ast = prattparse(ast2)
+  # log.pratt.debug("after parsing operators:\n", ast)
   return ast
