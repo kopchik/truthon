@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import re
 
+
 class NoMatch(Exception):
   pass
 
@@ -20,27 +21,34 @@ class Grammar:
 
 
 class RE(Grammar):
-  def __init__(self, pattern, comment=None):
-    self.comment = comment
+  def __init__(self, pattern, token=str, comment=None, passval=True):
     self.pattern_orig = pattern
     self.pattern = re.compile("\s*(%s)\s*" % pattern)
+    self.token = token
+    self.comment = comment
+    self.passval = passval
 
   def parse(self, text, pos=0):
     m = self.pattern.match(text[pos:])
     if not m:
       raise NoMatch("syntax error", text, pos)
-    return (self, m.groups()[0]), pos+m.end()
+    text = m.groups()[0]
+    newpos = pos+m.end()
+    if self.passval:
+      return self.token(text), newpos
+    else:
+      return self.token(), newpos
 
   def __repr__(self):
     if self.comment:
       return self.comment
     cls = self.__class__.__name__
-    return "%s(\"%s\")" % (cls, self.pattern_orig)
+    return "%s(\"%s\", %s)" % (cls, self.pattern_orig, self.token)
 
 
 class SYMBOL(RE):
-  def __init__(self, symbol):
-    super().__init__(re.escape(symbol))
+  def __init__(self, symbol, *args, **kwargs):
+    super().__init__(re.escape(symbol), *args, passval=False, **kwargs)
 
 
 ########################
