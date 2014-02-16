@@ -15,7 +15,7 @@ def symbol(sym, lbp=0):
     Sym = symap[sym]
   except KeyError:
     class Sym: pass
-    Sym.__name__ = "Sym('%s')" % sym
+    Sym.__name__ = Sym.__qualname__ = "Sym('%s')" % sym
     Sym.__repr__ = lambda _: "Sym('%s')" % sym
     Sym.sym = sym
     Sym.lbp = lbp
