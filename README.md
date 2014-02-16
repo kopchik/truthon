@@ -43,6 +43,11 @@ How it works
 Design Goals
 ------------
 
+What do computer programs? They provide a sequency of transformatins
+to you data in way to get the meaningful output. The goal of a
+computer language is to support writing such transformations
+
+
 1. Be safe, compact and friendly
 1. Static typing
 1. ML-like syntax (inspired by LiveScript)
