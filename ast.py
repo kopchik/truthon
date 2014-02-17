@@ -33,7 +33,7 @@ class Node:
     return "%s(%s)" % (cls, args)
 
 
-class Bare:
+class Leaf:
   def __init__(self, value):
     self.value = value
     super().__init__()
@@ -42,8 +42,11 @@ class Bare:
     cls = self.__class__.__name__
     return "%s:%s" % (cls, self.value)
 
+  def __iter__(self):
+    return iter([])
+
   def nud(self):
-    return self.value
+    return self
 
 
 class Unary(Node):
@@ -58,21 +61,23 @@ class Binary(Node):
 # SPECIAL #
 ###########
 
-class DENT(Bare):
+class DENT(Leaf):
   pass
 
-class Id(Bare):
+class Id(Leaf):
   pass
 
 ##############
 # Data types #
 ##############
 
-class Str(Bare):
+class Str(Leaf):
   pass
 
 class Block(list):
-  def __init__(self, value):
+  def __init__(self, value=None):
+    if not value:
+      value = []
     super().__init__(value)
 
   def __repr__(self):
@@ -242,7 +247,7 @@ def parse_blocks(ast, i=0, lvl=0):
         blks.append(blk)
       elif t.value > lvl:
         i, sub = parse_blocks(ast, i, lvl=t.value)
-        blk.append(Block(sub))
+        blk.append([sub])
         i += 1
       elif t.value <= lvl:
         return i, blks
@@ -252,31 +257,30 @@ def parse_blocks(ast, i=0, lvl=0):
   return i, blks
 
 
+def precedence(ast):
+  nodes = []
+  for e in ast:
+    if isinstance(e, list) and e:
+      expr = precedence(e)
+      if isinstance(expr, list):
+        expr = pratt_parse(expr)
+      nodes.append(expr)
+    else:
+      nodes.append(e)
+  return nodes
+
 
 def pretty_print(ast, lvl=0):
-  prefix = "  "*lvl
+  prefix = " "*lvl
   for e in ast:
-    # print("!", type(e), ast)
-    if isinstance(e, Block):
-      print(prefix, "\nBLOCK:")
+    if isinstance(e, list):
       pretty_print(e, lvl+1)
     else:
-      print(prefix, e, end=' ')
+      print(prefix, e)
   if lvl == 0:
     print()
 
 
-def precedence(ast):
-  result = []
-  for e in ast:
-    if isinstance(e, Block):
-      print("!! iterating over", e)
-      result += [precedence(Block)]
-    else:
-      expr = pratt_parse(e)
-      print("@@", expr)
-      result.append(expr)
-  return result
 
 
 def parse(raw):
