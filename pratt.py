@@ -5,10 +5,14 @@ Pratt-like parser.
 Inspired by http://effbot.org/zone/simple-top-down-parsing.htm
 """
 
+from log import Log
 from itertools import chain
 import sys
 
+
+log = Log("pratt")
 symap = {}
+
 
 def symbol(sym, lbp=0):
   try:
@@ -137,9 +141,10 @@ def expr(rbp=0):
 
 
 def parse(tokens):
+  global cur, nxt, e
+  log.debug("parsing", tokens)
   assert symap, "No operators registered." \
     "Please define at least one operator decorated with infix()/prefix()/etc"
-  global cur, nxt, e
   cur = nxt = None
   e = chain(tokens, [END])
   cur, nxt = shift()
