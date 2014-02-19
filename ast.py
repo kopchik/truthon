@@ -34,7 +34,7 @@ class Node(list):
 
   def __repr__(self):
     cls = self.__class__.__name__
-    args = ", ".join(map(repr, self))
+    args = ", ".join("%s=%s"%(name, getattr(self,name)) for name in self.fields)
     return "%s(%s)" % (cls, args)
 
 
@@ -266,9 +266,7 @@ def parse_args(node, depth):
 
 
 def parse_functions(node, depth):
-  if depth > 0:
-    return node
-  if not isinstance(node, Eq):
+  if depth > 0 or not isinstance(node, Eq):
     return node
   node = Func(node.left, node.right)
   return node
