@@ -58,9 +58,8 @@ computer language is to support writing such transformations
 1. Custom operators
 1. Garbage collection
 1. Will alarm on useless statements (like forget to call function)
-1. Substitute vars in strings: "Hello, ${username}!"
+1. Substitute vars in strings: "Hello, {username}!"
 1. UTF8 strings
-1. C-style ternary condition operator
 1. Assigments in if-clause (but it should evaluate to bool <- safety measure)
 1. Support comments:
     shell-style # blah
@@ -129,6 +128,11 @@ References
 1. http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 1. http://effbot.org/zone/simple-top-down-parsing.htm
 
+Useful Links
+============
+
+1. http://roscidus.com/blog/blog/2013/06/20/replacing-python-round-2/#syntax
+1. http://en.wikipedia.org/wiki/Linear_type_system
 
 CODING GUIDELINES
 =================

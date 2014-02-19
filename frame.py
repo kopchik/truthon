@@ -25,6 +25,7 @@ class Frame:
   def __exit__(self, *args):
     pass
 
+
 if __name__ == '__main__':
   frame = Frame()
   frame['a'] = 1

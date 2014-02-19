@@ -11,25 +11,30 @@ log = Log('ast')
 #############
 # TEMPLATES #
 #############
-class Node:
+class Node(list):
   fields = []
 
   def __init__(self, *args):
-    assert len(args) == len(self.fields), \
-      "Number of arguments mismatch defined fields"
-    self.list = list(args)
+    if self.fields and len(args) != len(self.fields):
+      raise Exception("Number of arguments mismatch defined fields")
+    super().__init__(args)
 
   def __getattr__(self, name):
     assert name in self.fields, "Unknown field %s" % name
     idx = self.fields.index(name)
-    return self.list[idx]
+    return self[idx]
 
-  def __iter__(self):
-    return iter(self.list)
+  def __setattr__(self, name, value):
+    print("SET", name, value)
+    idx = self.fields.index(name)
+    self[idx] = value
+
+  def __dir__(self):
+    return self.fields
 
   def __repr__(self):
     cls = self.__class__.__name__
-    args = ",".join(map(repr, self.list))
+    args = ", ".join(map(repr, self))
     return "%s(%s)" % (cls, args)
 
 
@@ -74,14 +79,10 @@ class Id(Leaf):
 class Str(Leaf):
   pass
 
-class Block(list):
-  def __init__(self, value=None):
-    if not value:
-      value = []
-    super().__init__(value)
-
+class Block(Node):
   def __repr__(self):
     return "%s(%s)" % (self.__class__.__name__, super().__repr__())
+  __str__ = __repr__
 
   def nud(self):
     return self
@@ -102,9 +103,9 @@ class Plus(Unary):
 class Print(Unary):
   pass
 
-@prefix('->', 2)
-class Lambda0(Unary):
-  pass
+# @prefix('->', 2)
+# class Lambda0(Unary):
+#   pass
 
 @postfix('!', 3)
 class CALL(Unary):
@@ -133,94 +134,53 @@ class Eq(Binary):
 
 @infix('->', 2)
 class Lambda(Binary):
-  pass
+  fields = ['args', 'body']
 
 @brackets('(',')')
 class Parens(Unary):
   pass
 
 @infix(',', 1)
-class Comma:
+class Comma(Node):
+  fields = None
   """ Two and more commas in a row
       will be merged into one.
   """
   def __init__(self, left, right):
-    self.values = []
+    values = []
     if isinstance(left, Comma):
-      self.values += left.values + [right]
+      values += left + [right]
     else:
-      self.values = [left, right]
+      values = [left, right]
+    print(values)
+    super().__init__(values)
 
   def __repr__(self):
     cls = self.__class__.__name__
-    return "(%s %s)" % (cls, self.values)
+    return "(%s %s)" % (cls, list(self))
 
-##################
-# FORMAL GRAMMAR #
-##################
 
-from peg import RE, SOMEOF, MAYBE, OR, SYMBOL
+class Var:
+  def __init__(self, name, default=None):
+    self.name = name
+    self.default = default # default value
+  def __repr__(self):
 
-# CONSTANTS
-FLOATCONST = RE(r'[-]{0,1}\d+\.\d*', comment="FLOAT")
-INTCONST   = RE(r'[-]{0,1}\d+', comment="INT")
-STRCONST   = RE(r'"(.*)"', Str)
-CONST = FLOATCONST | INTCONST | STRCONST
+    return "%s(\"%s\")" % (self.__class__.__name__, self.name)
 
-# COMMENTS
-SHELLCOMMENT = RE(r'\#.*')
-CPPCOMMENT   = RE(r'//.*')
-CCOMMENT     = RE(r'/\*.*?\*/')
-COMMENT = SHELLCOMMENT | CCOMMENT | CPPCOMMENT
 
-# TODO: add this to PROG
-# END is like ENDL (end of line)
-# but allows trailing comments
-EOL = RE(r'$', comment="EOL")  # end of line
-END = EOL | (COMMENT+EOL)
+###############
+# INTERPRETER #
+###############
 
-# IDENTIFIER (FUNCTION NAMES, VARIABLES, ETC)
-ID = RE(r'[A-Za-z_][a-zA-Z0-9_]*', Id)
-
-# put longest operators first because for PEG first match wins
-operators = []
-for sym in sorted(symap.keys(), key=len, reverse=True):
-  operators += [SYMBOL(sym, symap[sym])]
-OPERATOR = OR(*operators)
-PROGRAM = SOMEOF(CONST, OPERATOR, ID, COMMENT) #+ END
-
-def tokenize(ast1):
-  tokens = []
-  for t in ast1:
-    if isinstance(t, str):
-      ts, l = PROGRAM.parse(t)
-      # assert len(t) == l, "cannot parse %s" % t
-      tokens += ts
-    else:
-      tokens += [t]
-  return tokens
+class Func(Node):
+  fields = ['args', 'body']
 
 
 #####################
 # INDENTATION PARSE #
 #####################
 
-def get_indent(s):
-  """Get current indent in symbols"""
-  depth = 0
-  for depth, c in enumerate(s):
-    if not c.isspace():
-      break
-  return depth
-
-
-def add_dents(ast0):
-  result = []
-  for l in ast0:
-    depth = get_indent(l)
-    result.append(DENT(depth))
-    result.append(l)
-  return result
 
 
 def add_implicit_dents(ast):
@@ -281,25 +241,51 @@ def pretty_print(ast, lvl=0):
     print()
 
 
+def rewrite(tree, f, d=0):
+  for i,n in enumerate(tree):
+      if isinstance(n, Node):
+        n = rewrite(n, f, d+1)
+      tree[i] = f(n, d)
+  return tree
 
 
-def parse(raw):
-  # PARSE OPERATORS AND DEFINITIONS
-  ast = raw.splitlines()
-  ast = add_dents(ast)
-  log.dents.debug("after parsing indentation:\n", ast)
-  ast = tokenize(ast)
-  log.tokenizer.debug("after tokenizer:\n", ast)
-  ast = add_implicit_dents(ast)
-  log.tokenizer.debug("after implicit dents:\n", ast)
-  _, ast = parse_blocks(ast)
+def add_blocks(node, depth):
+  """Add blocks"""
+  if isinstance(node, list):
+    return Block(node)
+  return node
+
+
+def parse_args(node, depth):
+  if not isinstance(node, Lambda):
+    return node
+  argnames = node.args[0][0]  # TODO: why so many nested lists?
+  args = [Var(name.value) for name in argnames]
+  node.args = args
+  return node
+
+
+def parse_functions(node, depth):
+  if depth > 0:
+    return node
+  if not isinstance(node, Eq):
+    return node
+  node = Func(node.left, node.right)
+  return node
+
+
+def parse(tokens):
+  tokens = add_implicit_dents(tokens)
+  log.debug("after implicit dents:\n", tokens)
+
+  _, ast = parse_blocks(tokens)
   log.blocks.debug("after block parser:\n", ast)
-  pretty_print(ast)
+
   ast = precedence(ast)
   log.blocks.info("after pratt parser:\n", ast)
-  pretty_print(ast)
-  # ast = pratt_parse(ast)
-  # log.blocks.info("after pratt parse:\n", ast)
-  # ast = prattparse(ast2)
-  # log.pratt.debug("after parsing operators:\n", ast)
+
+  for f in [parse_args, parse_functions]:
+    ast = rewrite(ast, f)
+    log.rewrite.info("after: %s\n"% f.__name__, ast)
+
   return ast

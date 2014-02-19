@@ -2,6 +2,7 @@
 
 from log import logfilter
 from ast import parse
+from tokenizer import tokenize
 import argparse
 
 
@@ -14,7 +15,8 @@ def main():
   for fname in args.input:
     with open(fname) as fd:
       src = fd.read()
-      ast = parse(src)
+      tokens = tokenize(src)
+      ast = parse(tokens)
 
 if __name__ == '__main__':
   main()
