@@ -8,55 +8,61 @@ Int64 = Type.int(64)
 Void  = Type.void()
 STR   = PTR(Int8)
 STRArray = PTR(STR)
+STRList = Type.struct([Int64, STRArray], "STRList")
 
-class STRList:
-  type = None
-  def __init__(self, size):
-    # assert all(type(v) == type(values[0]) for v in values), \
-      # "all elements of list should be of the same type"
-    self.size = size
+# class STRList:
+#   type = None
+#   def __init__(self, size):
+#     # assert all(type(v) == type(values[0]) for v in values), \
+#       # "all elements of list should be of the same type"
+#     self.size = size
 
-  def codegen(self):
-    self.type = Type.struct([Int64, STRArray])  #size
+#   def codegen(self):
+#     self.type = STRList
 
-
-class Fun:
-  args = None
-  ret  = None
-  name = "noname"
-
-  def codegen(self):
-    global module
-    if not self.ret:
-      ret = Void
-    argc = Int32
-    argv =  STRArray
-    proto = Type.function(ret, [argc, argv])
-    function = Function.new(module, proto, self.name)
-    entry = function.append_basic_block("entry")
-    exit  = function.append_basic_block("exit")
 
 
 def argv(func):
+  global module
   blk = func.append_basic_block("args")
+  builder = Builder.new(blk)
+  # fn = module.get_function_named("mainargs")
+  fn = LLVMFunction("mainargs", args=[Int32, STRArray], ret=PTR(STRList), m=module)
+  # print(fn.type.pointee.args)
+  builder.call(fn, [Int32, STRArray], "whatisit")
 
 
 class MainFun:
   def codegen(self):
     global module
-    ret = Int32
-    argc = Int32
-    argv = STRArray
-    proto = Type.function(ret, [argc, argv])
-    function = Function.new(module, proto, "main")
-    blk = function.append_basic_block("entry")
+    func = LLVMFunction("main", [Int32, STRArray], Int32, module)
+    argv(func)
+    blk = func.append_basic_block("entry")
     builder = Builder.new(blk)
     builder.ret(Constant.int(Int32, 0))
+    func.verify()
+
+
+def LLVMFunction(name, args, ret, m):
+  proto = Type.function(ret, args)
+  func  = Function.new(m, proto, name)
+  return func
+
+
+class STDLib:
+  def codegen(self):
+    global module
+    #[Str] => [Str]
+    LLVMFunction("PrintSTRArray", args=[STRArray], ret=STRArray, m=module)
+    # LLVMFunction("mainargs", args=[Int32, STRArray], ret=PTR(STRList), m=module)
 
 
 def codegen(tree, name="(no name)", output="/tmp/llvm.ir"):
   global module
   module = Module.new(name)
+  stdlib = STDLib()
+  stdlib.codegen()
+
   function = MainFun()
   function.codegen()
   print(module)
