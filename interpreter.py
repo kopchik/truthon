@@ -1,4 +1,5 @@
-from ast import Node, Leaf, Eq, Lambda, Print as ASTPrint, rewrite
+from ast import Node, Leaf, rewrite
+import ast
 from frame import Frame
 from log import Log
 log = Log("interpreter")
@@ -19,9 +20,23 @@ class Print(Node):
 
 
 class Int(Leaf):
-  fields = ['value']
+  def __init__(self, value):
+    self.value = int(value)
+
+  def __str__(self):
+    return str(self.value)
+
   def run(self, frame):
-    return int(self.value)
+    return self.value
+
+
+class Str(Leaf):
+  def __init__(self, value):
+    self.value = value.strip('"')
+  def __str__(self):
+    return self.value
+  def run(self, frame):
+    return self.value
 
 
 class Array(Leaf):
@@ -29,21 +44,23 @@ class Array(Leaf):
   def run(self, frame):
     return self.value
 
-def parse_funcs(node, depth):
-  if not isinstance(node, Lambda):
-    return node
-  node = Func(node.args, node.body)
+
+def replace_nodes(node, depth):
+  if isinstance(node, ast.Int):
+    return Int(node.value)
+  if isinstance(node, ast.Print):
+    return Print(node.value)
+  if isinstance(node, ast.Str):
+    return Str(node.value)
+  if isinstance(node, ast.Lambda):
+    return Func(node.args, node.body)
   return node
 
 
-def parse_print(node, depth):
-  if not isinstance(node, ASTPrint):
-    return node
-  return Print(node.value)
 
 
 def populate_top_frame(node, depth, frame):
-  if depth == 0 and isinstance(node, Eq):
+  if depth == 0 and isinstance(node, ast.Eq):
     key   = str(node.left)
     value = node.right
     frame[key] = value
@@ -52,8 +69,7 @@ def populate_top_frame(node, depth, frame):
 
 def run(ast, args=[]):
   frame = Frame()
-  ast = rewrite(ast, parse_funcs)
-  ast = rewrite(ast, parse_print)
+  ast = rewrite(ast, replace_nodes)
   log.final_ast("the final AST is:\n", ast)
   ast = rewrite(ast, populate_top_frame, frame=frame)
   log.topframe("the top frame is\n", frame)
