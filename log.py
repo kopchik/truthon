@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 from functools import partial
 from termcolor import colored
+from copy import copy
 import sys
+
 levels = ["debug", "info", "critical"]
 
 styles = {
-  'debug': {'color': 'blue'},
+  'debug': {'color': 'white'},
   'info': {'color': 'green'},
   'notice': {'color': 'green', 'attrs': ['bold']},
   'error': {'color': 'red'},
@@ -40,7 +42,7 @@ class Log:
     if isinstance(prefix, str):
         prefix = prefix.split('.')
     self.prefix = prefix
-    self.path = []
+    self.path = copy(self.prefix)
 
   def __getattr__(self, name):
     if name in levels:
@@ -48,15 +50,18 @@ class Log:
     self.path.append(name)
     return self
 
+  def __call__(self, *args, **kwargs):
+    self.log(*args, **kwargs)
+
   def log(self, *msg, verbosity="debug"):
     facility = self.prefix + self.path
     if logfilter.test(verbosity, facility):
       prefix = ".".join(facility)
       prefix += " {}:".format(verbosity)
       style = styles[verbosity]
-      print(colored(" ".join(str(m) for m in msg), **style), file=sys.stderr)
+      print(colored('.'.join(self.path)+': '+" ".join(str(m) for m in msg), **style), file=sys.stderr)
       # print(prefix, *msg, file=sys.stderr)
-    self.path = []
+    self.path = copy(self.prefix)
 
 
 if __name__ == '__main__':
