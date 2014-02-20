@@ -1,15 +1,49 @@
-from ast import Node, Leaf, rewrite
+from ast import Node, Leaf, Eq, Lambda, Print as ASTPrint, rewrite
 from frame import Frame
+from log import Log
+log = Log("interpreter")
+
 
 class Func(Node):
   fields = ['args', 'body']
 
-def parse_functions(node, depth):
-  if depth > 0 or not isinstance(node, Eq):
+  def run(self, frame):
+    return self.body.run(frame)
+
+
+class Print(Node):
+  fields = ['arg']
+  def run(self, frame):
+    print(self.arg)
+    return self.arg
+
+def parse_funcs(node, depth):
+  if not isinstance(node, Lambda):
     return node
-  node = Func(node.left, node.right)
+  node = Func(node.args, node.body)
+  return node
+
+
+def parse_print(node, depth):
+  if not isinstance(node, ASTPrint):
+    return node
+  return Print(node.value)
+
+
+def populate_frame(node, depth, frame):
+  if depth == 0 and isinstance(node, Eq):
+    key   = str(node.left)
+    value = node.right
+    frame[key] = value
   return node
 
 
 def run(ast):
-  pass
+  frame = Frame()
+  ast = rewrite(ast, parse_funcs)
+  ast = rewrite(ast, parse_print)
+  log.final_ast("the final AST is:\n", ast)
+  ast = rewrite(ast, populate_frame, frame=frame)
+  log.topframe("the top frame is\n", frame)
+  with frame as newframe:
+    newframe['main'].run(newframe)
