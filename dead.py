@@ -12,6 +12,7 @@ if __name__ == '__main__':
   parser.add_argument('-t', '--tokens', action='store_const', const=True, default=False, help="show tokens")
   parser.add_argument('-a', '--ast', action='store_const', const=True, default=False, help="show abstract syntax tree")
   parser.add_argument('input', help="path to file")
+  parser.add_argument('cmd', nargs="*")
   args = parser.parse_args()
 
   with open(args.input) as fd:
@@ -22,4 +23,4 @@ if __name__ == '__main__':
     ast = parse(tokens)
     if args.ast:
       pretty_print(ast)
-    exit(run(ast))
+    exit(run(ast, args.cmd))

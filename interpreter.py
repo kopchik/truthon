@@ -38,7 +38,7 @@ def populate_frame(node, depth, frame):
   return node
 
 
-def run(ast):
+def run(ast, args=[]):
   frame = Frame()
   ast = rewrite(ast, parse_funcs)
   ast = rewrite(ast, parse_print)
