@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from functools import partial
 from termcolor import colored
+from fnmatch import fnmatch
 from copy import copy
 import sys
 
@@ -16,24 +17,17 @@ styles = {
 
 
 class Filter:
-  def __init__(self, verbosity="debug"):
-    self.set_verbosity(verbosity)
-    self.excluded = []
-    self.included = []
+  def __init__(self, rules=[], default=True):
+    self.rules = rules
+    self.default = default
 
-  def set_verbosity(self, verbosity):
-    self.loglevel = levels.index(verbosity)
+  def test(self, path):
+    path = ".".join(path)
+    for pattern,mode in self.rules:
+      if fnmatch(path, pattern):
+        return mode
+    return self.default
 
-  def include(self):
-    pass
-
-  def exclude(self):
-    pass
-
-  def test(self, verbosity, facility):
-    if levels.index(verbosity) >= self.loglevel:
-      return True
-    return False
 logfilter = Filter()
 
 
@@ -45,22 +39,17 @@ class Log:
     self.path = copy(self.prefix)
 
   def __getattr__(self, name):
-    if name in levels:
-      return partial(self.log, verbosity=name)
     self.path.append(name)
     return self
 
   def __call__(self, *args, **kwargs):
     self.log(*args, **kwargs)
 
-  def log(self, *msg, verbosity="debug"):
-    facility = self.prefix + self.path
-    if logfilter.test(verbosity, facility):
-      prefix = ".".join(facility)
-      prefix += " {}:".format(verbosity)
-      style = styles[verbosity]
-      print(colored('.'.join(self.path)+': '+" ".join(str(m) for m in msg), **style), file=sys.stderr)
-      # print(prefix, *msg, file=sys.stderr)
+  def log(self, *msg):
+    if logfilter.test(self.path):
+      style = styles['debug']
+      msg = '.'.join(self.path)+': '+" ".join(str(m) for m in msg)
+      print(colored(msg, **style), file=sys.stderr)
     self.path = copy(self.prefix)
 
 

@@ -15,6 +15,11 @@ if __name__ == '__main__':
   parser.add_argument('cmd', nargs="*")
   args = parser.parse_args()
 
+  logfilter.default = False
+  logfilter.rules = [
+    ('interpreter.*', True)
+  ]
+
   with open(args.input) as fd:
     src = fd.read()
     tokens = tokenize(src)
