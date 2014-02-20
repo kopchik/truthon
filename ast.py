@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from functools import partial
+
 from pratt import prefix, infix, infix_r, postfix, brackets, \
   symap, parse as pratt_parse
 
@@ -25,7 +27,6 @@ class Node(list):
     return self[idx]
 
   def __setattr__(self, name, value):
-    print("SET", name, value)
     idx = self.fields.index(name)
     self[idx] = value
 
@@ -152,7 +153,6 @@ class Comma(Node):
       values += left + [right]
     else:
       values = [left, right]
-    print(values)
     super().__init__(values)
 
   def __repr__(self):
@@ -165,16 +165,8 @@ class Var:
     self.name = name
     self.default = default # default value
   def __repr__(self):
-
     return "%s(\"%s\")" % (self.__class__.__name__, self.name)
 
-
-###############
-# INTERPRETER #
-###############
-
-class Func(Node):
-  fields = ['args', 'body']
 
 
 #####################
@@ -233,7 +225,8 @@ def precedence(ast):
 def pretty_print(ast, lvl=0):
   prefix = " "*lvl
   for e in ast:
-    if isinstance(e, list):
+    if isinstance(e, Node):
+      print(prefix, type(e).__name__)
       pretty_print(e, lvl+1)
     else:
       print(prefix, e)
@@ -265,13 +258,6 @@ def parse_args(node, depth):
   return node
 
 
-def parse_functions(node, depth):
-  if depth > 0 or not isinstance(node, Eq):
-    return node
-  node = Func(node.left, node.right)
-  return node
-
-
 def parse(tokens):
   tokens = add_implicit_dents(tokens)
   log.debug("after implicit dents:\n", tokens)
@@ -282,8 +268,5 @@ def parse(tokens):
   ast = precedence(ast)
   log.blocks.info("after pratt parser:\n", ast)
 
-  for f in [parse_args, parse_functions]:
-    ast = rewrite(ast, f)
-    log.rewrite.info("after: %s\n"% f.__name__, ast)
-
-  return ast
+  ast = rewrite(ast, parse_args)
+  log.rewrite.info("after rewriting func args:\n", ast)
