@@ -70,15 +70,15 @@ class Binary(Node):
 class DENT(Leaf):
   pass
 
+
 class Id(Leaf):
-  pass
+  def __str__(self):
+    return self.value
+
 
 ##############
 # Data types #
 ##############
-
-class Str(Leaf):
-  pass
 
 class Block(Node):
   def __repr__(self):
@@ -87,6 +87,12 @@ class Block(Node):
 
   def nud(self):
     return self
+
+
+class Str(Leaf):
+  def __str__(self):
+    return self.value
+
 
 #########
 # UNARY #
@@ -169,10 +175,16 @@ class Var:
 
 
 
-#####################
-# INDENTATION PARSE #
-#####################
+#######################
+# AST TRANSFORMATIONS #
+#######################
 
+def rewrite(tree, f, d=0, **kwargs):
+  for i,n in enumerate(tree):
+      if isinstance(n, Node):
+        n = rewrite(n, f, d+1, **kwargs)
+      tree[i] = f(n, d, **kwargs)
+  return tree
 
 
 def add_implicit_dents(ast):
@@ -209,6 +221,13 @@ def parse_blocks(ast, i=0, lvl=0):
   return i, blks
 
 
+def add_blocks(node, depth):
+  """Add blocks"""
+  if isinstance(node, list):
+    return Block(node)
+  return node
+
+
 def precedence(ast):
   nodes = []
   for e in ast:
@@ -234,21 +253,6 @@ def pretty_print(ast, lvl=0):
     print()
 
 
-def rewrite(tree, f, d=0):
-  for i,n in enumerate(tree):
-      if isinstance(n, Node):
-        n = rewrite(n, f, d+1)
-      tree[i] = f(n, d)
-  return tree
-
-
-def add_blocks(node, depth):
-  """Add blocks"""
-  if isinstance(node, list):
-    return Block(node)
-  return node
-
-
 def parse_args(node, depth):
   if not isinstance(node, Lambda):
     return node
@@ -260,13 +264,15 @@ def parse_args(node, depth):
 
 def parse(tokens):
   tokens = add_implicit_dents(tokens)
-  log.debug("after implicit dents:\n", tokens)
+  log.imp_dents("after implicit dents:\n", tokens)
 
   _, ast = parse_blocks(tokens)
-  log.blocks.debug("after block parser:\n", ast)
+  log.blocks("after block parser:\n", ast)
 
   ast = precedence(ast)
-  log.blocks.info("after pratt parser:\n", ast)
+  log.pratt("after pratt parser:\n", ast)
 
   ast = rewrite(ast, parse_args)
-  log.rewrite.info("after rewriting func args:\n", ast)
+  log.rewrite("after rewriting func args:\n", ast)
+
+  return ast
