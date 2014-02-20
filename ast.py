@@ -93,6 +93,10 @@ class Str(Leaf):
   def __str__(self):
     return self.value
 
+class Int(Leaf):
+  def __str__(self):
+    return self.value
+
 
 #########
 # UNARY #

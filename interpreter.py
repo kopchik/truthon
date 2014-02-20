@@ -17,6 +17,18 @@ class Print(Node):
     print(self.arg)
     return self.arg
 
+
+class Int(Leaf):
+  fields = ['value']
+  def run(self, frame):
+    return int(self.value)
+
+
+class Array(Leaf):
+  fields = ['value']
+  def run(self, frame):
+    return self.value
+
 def parse_funcs(node, depth):
   if not isinstance(node, Lambda):
     return node
@@ -30,7 +42,7 @@ def parse_print(node, depth):
   return Print(node.value)
 
 
-def populate_frame(node, depth, frame):
+def populate_top_frame(node, depth, frame):
   if depth == 0 and isinstance(node, Eq):
     key   = str(node.left)
     value = node.right
@@ -43,7 +55,12 @@ def run(ast, args=[]):
   ast = rewrite(ast, parse_funcs)
   ast = rewrite(ast, parse_print)
   log.final_ast("the final AST is:\n", ast)
-  ast = rewrite(ast, populate_frame, frame=frame)
+  ast = rewrite(ast, populate_top_frame, frame=frame)
   log.topframe("the top frame is\n", frame)
+
   with frame as newframe:
-    newframe['main'].run(newframe)
+    func = newframe['main']
+    newframe['argc'] = Int(len(args))
+    newframe['argv'] = Array(args)
+    print(newframe)
+    func.run(newframe)

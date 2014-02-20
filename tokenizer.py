@@ -1,12 +1,12 @@
 from peg import RE, SOMEOF, MAYBE, OR, SYMBOL
-from ast import symap, Str, Id, DENT
+from ast import symap, Id, Int, Str, DENT
 from log import Log
 
 log = Log("tokenizer")
 
 # CONSTANTS
 FLOATCONST = RE(r'[-]{0,1}\d+\.\d*', comment="FLOAT")
-INTCONST   = RE(r'[-]{0,1}\d+', comment="INT")
+INTCONST   = RE(r'[-]{0,1}\d+', Int)
 STRCONST   = RE(r'"(.*)"', Str)
 CONST = FLOATCONST | INTCONST | STRCONST
 
