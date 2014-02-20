@@ -4,6 +4,7 @@ class Frame:
   def __init__(self, parent=None):
     self.dict = {}
     self.parent = parent
+    self.depth = (self.parent.depth + 1) if self.parent else 0
 
   def __setitem__(self, key, value):
     self.dict[key] = value
@@ -18,6 +19,10 @@ class Frame:
       if not self.parent:
         raise
     return self.parent[key]
+
+  def __repr__(self):
+    cls = self.__class__.__name__
+    return "%s(depth=%s, %s, parent=%s)" % (cls, self.depth, self.dict, repr(self.parent))
 
   def __enter__(self):
     return Frame(self)
