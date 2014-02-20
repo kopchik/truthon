@@ -1,5 +1,5 @@
 from peg import RE, SOMEOF, MAYBE, OR, SYMBOL
-from ast import symap, Id, Int, Str, DENT
+from ast import symap, Id, Int, Str, ShellCmd, DENT
 from log import Log
 
 log = Log("tokenizer")
@@ -8,7 +8,8 @@ log = Log("tokenizer")
 FLOATCONST = RE(r'[-]{0,1}\d+\.\d*', comment="FLOAT")
 INTCONST   = RE(r'[-]{0,1}\d+', Int)
 STRCONST   = RE(r'"(.*)"', Str)
-CONST = FLOATCONST | INTCONST | STRCONST
+SHELLCMD   = RE(r'`(.*)`', ShellCmd)
+CONST = FLOATCONST | INTCONST | STRCONST | SHELLCMD
 
 # COMMENTS
 SHELLCOMMENT = RE(r'\#.*')

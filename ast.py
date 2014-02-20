@@ -90,11 +90,9 @@ class Block(Node):
     return self
 
 
-class Str(Leaf):
-  pass
-
-class Int(Leaf):
-  pass
+class Str(Leaf): pass
+class ShellCmd(Leaf):  pass
+class Int(Leaf):  pass
 
 
 #########

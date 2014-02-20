@@ -1,7 +1,10 @@
 from ast import Node, Leaf, rewrite
-import ast
 from frame import Frame
 from log import Log
+import ast
+
+from subprocess import check_output
+import shlex
 import re
 
 log = Log("interpreter")
@@ -38,6 +41,7 @@ class Int(Leaf):
 class Str(ast.Leaf):
   def __str__(self):
     return self.value
+
   def run(self, frame):
     replace = {r'\n': '\n', r'\t': '\t'}
     string = self.value.strip('"')
@@ -48,6 +52,14 @@ class Str(ast.Leaf):
     for k,v in replace.items():
       string = string.replace(k, v)
     return string
+
+
+class ShellCmd(Str):
+  def run(self, frame):
+    cmd = super().run(frame)
+    cmd = cmd.strip('`')
+    raw = check_output(shlex.split(cmd))
+    return raw.decode()
 
 
 class Array(Leaf):
@@ -91,6 +103,8 @@ def replace_nodes(node, depth):
     return Parens(node.value)
   if isinstance(node, ast.Id):
     return Var(node.value)
+  if isinstance(node, ast.ShellCmd):
+    return ShellCmd(node.value)
   return node
 
 
