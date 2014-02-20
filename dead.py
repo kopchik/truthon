@@ -11,14 +11,17 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('-t', '--tokens', action='store_const', const=True, default=False, help="show tokens")
   parser.add_argument('-a', '--ast', action='store_const', const=True, default=False, help="show abstract syntax tree")
+  parser.add_argument('-d', '--debug', action='store_const', const=True, default=False, help="show intermediate output")
   parser.add_argument('input', help="path to file")
   parser.add_argument('cmd', nargs="*")
   args = parser.parse_args()
 
-  logfilter.default = False
   logfilter.rules = [
     ('interpreter.*', True)
   ]
+
+  if args.debug: logfilter.default = True
+  else:          logfilter.default = False
 
   with open(args.input) as fd:
     src = fd.read()
