@@ -2,6 +2,8 @@ from ast import Node, Leaf, rewrite
 import ast
 from frame import Frame
 from log import Log
+import re
+
 log = Log("interpreter")
 
 
@@ -37,8 +39,15 @@ class Str(ast.Leaf):
   def __str__(self):
     return self.value
   def run(self, frame):
-    value = self.value.strip('"')
-    return self.value
+    replace = {r'\n': '\n', r'\t': '\t'}
+    string = self.value.strip('"')
+    varnames = re.findall("\{([a-zA-Z\.]+)\}", string, re.M)
+    for name in varnames:
+        value = str( Var(name).run(frame) )
+        string = string.replace("{%s}" % name, value)
+    for k,v in replace.items():
+      string = string.replace(k, v)
+    return string
 
 
 class Array(Leaf):
@@ -104,5 +113,4 @@ def run(ast, args=[]):
     func = newframe['main']
     newframe['argc'] = Int(len(args))
     newframe['argv'] = Array(args)
-    print(newframe)
     func.run(newframe)
