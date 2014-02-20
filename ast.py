@@ -41,6 +41,7 @@ class Node(list):
 
 class Leaf:
   def __init__(self, value):
+    assert not hasattr(self, 'fields'), "Leaf cannot have fields attribute"
     self.value = value
     super().__init__()
 
@@ -90,12 +91,10 @@ class Block(Node):
 
 
 class Str(Leaf):
-  def __str__(self):
-    return self.value
+  pass
 
 class Int(Leaf):
-  def __str__(self):
-    return self.value
+  pass
 
 
 #########
@@ -170,12 +169,9 @@ class Comma(Node):
     return "(%s %s)" % (cls, list(self))
 
 
-class Var:
-  def __init__(self, name, default=None):
-    self.name = name
-    self.default = default # default value
-  def __repr__(self):
-    return "%s(\"%s\")" % (self.__class__.__name__, self.name)
+class Var(Leaf):
+  def __str__(self):
+    return "%s(\"%s\")" % (self.__class__.__name__, self.value)
 
 
 
