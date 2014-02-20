@@ -7,7 +7,6 @@ log = Log("interpreter")
 
 class Func(Node):
   fields = ['args', 'body']
-
   def run(self, frame):
     return self.body.run(frame)
 
@@ -15,7 +14,8 @@ class Func(Node):
 class Print(Node):
   fields = ['arg']
   def run(self, frame):
-    print(self.arg)
+    r = self.arg.run(frame)
+    print(r)
     return self.arg
 
 
@@ -26,23 +26,45 @@ class Int(Leaf):
   def __str__(self):
     return str(self.value)
 
+  def __add__(self, right):
+    return Int(self.value + right.value)
+
   def run(self, frame):
-    return self.value
+    return self
 
 
-class Str(Leaf):
-  def __init__(self, value):
-    self.value = value.strip('"')
+class Str(ast.Leaf):
   def __str__(self):
     return self.value
   def run(self, frame):
+    value = self.value.strip('"')
     return self.value
 
 
 class Array(Leaf):
-  fields = ['value']
   def run(self, frame):
     return self.value
+
+
+class Var(Leaf):
+  def __str__(self):
+    return str(self.value)
+
+  def run(self, frame):
+    return frame[self.value]
+
+
+class Add(Node):
+  fields = ['left', 'right']
+  def run(self, frame):
+    left = self.left.run(frame)
+    right = self.right.run(frame)
+    return left + right
+
+
+class Parens(ast.Parens):
+  def run(self, frame):
+    return self.value.run(frame)
 
 
 def replace_nodes(node, depth):
@@ -54,9 +76,13 @@ def replace_nodes(node, depth):
     return Str(node.value)
   if isinstance(node, ast.Lambda):
     return Func(node.args, node.body)
+  if isinstance(node, ast.Add):
+    return Add(node.left, node.right)
+  if isinstance(node, ast.Parens):
+    return Parens(node.value)
+  if isinstance(node, ast.Id):
+    return Var(node.value)
   return node
-
-
 
 
 def populate_top_frame(node, depth, frame):
